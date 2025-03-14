@@ -1,4 +1,4 @@
-# Second Night by EnigmaAI
+# Second Sight by EnigmaAI
 
 ## Setup
 List library dependencies in requirements.txt
