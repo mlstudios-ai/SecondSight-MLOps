@@ -2,9 +2,11 @@
 
 ## Setup
 Clone GitHub Repository on GitBash using:
+
 git clone https://{github_username}:{github_access_token}@github.com/{github_username}/EnigmaAI.git
 
 List library dependencies in requirements.txt
+
 Run `pip install -r requirements.txt` to install all dependencies
 
 ## Datasets:
