@@ -21,5 +21,5 @@ Endpoint for model inferencing using FastAPI.
 To start the server, run the following command:
 
 ```sh
-uvicorn app.main:app --reload
+uvicorn api.main:app --reload
 ```

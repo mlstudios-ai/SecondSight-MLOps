@@ -2,4 +2,3 @@ fastapi[standard,docs,dev]
 Jinja2
 numpy
 torch
-scikit-learn
