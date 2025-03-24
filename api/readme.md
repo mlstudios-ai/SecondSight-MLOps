@@ -1,5 +1,9 @@
 # API Endpoint
-Endpoint for model inferencing using FastAPI.
+API endpoint for model inferencing using FastAPI.
+
+To test functionalities use {url}/
+
+To test API user {url}/docs
 
 ## Environment Setup
 
@@ -13,7 +17,7 @@ Endpoint for model inferencing using FastAPI.
 2. Install the required dependencies:
 
     ```sh
-    pip3 install -r requirements.txt
+    pip3 install -r api/requirements.txt 
     ```
 
 ## Running the Server
