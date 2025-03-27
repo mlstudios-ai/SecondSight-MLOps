@@ -2,6 +2,14 @@ data:
   train_json: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset\\annotations\\train.json"
   valid_json: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset\\annotations\\val.json"
   test_json: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset\\annotations\\test.json"
+  img_dataset: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset"
 output:
   exploration: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\outputs\\exploration_outputs"
-  dataset: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset"
+  preprocessed: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset\\preprocessed"
+  finetuned_model: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\outputs\\finetuned_model"
+csv_data:
+  train_csv: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset\\train.csv"
+  valid_csv: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset\\valid.csv"
+  test_csv: "C:\\Users\\kamat\\OneDrive\\Documents\\GitHub\\AIS\\EnigmaAI\\image_description\\dataset\\test.csv"
+template:
+  chat_template: "A conversation for image captioning. The user provides an image and asks about its content, and the assistant responds with a descriptive caption. {% for message in messages %} {% if message['role'] == 'user' %} USER: {% for item in message['content'] %} {% if item['type'] == 'image' %}<image>{% elif item['type'] == 'text' %}{{ item['text'] }}{% endif %} {% endfor %} {% else %} SECOND_SIGHT_ASSISTANT: {% for item in message['content'] %} {% if item['type'] == 'text' %}{{ item['text'] }}{% endif %} {% endfor %}{{ eos_token }} {% endif %} {% endfor %}"
