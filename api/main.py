@@ -2,9 +2,19 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from api.routers import api, index
 
 app = FastAPI()
+
+# Allow CORS for frontend (if you plan to connect to this via a frontend app)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust for your needs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # no cache response to prevent stale content
 class NoCacheMiddleware(BaseHTTPMiddleware):
