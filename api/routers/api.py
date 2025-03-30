@@ -10,7 +10,7 @@ import torch
 
 router = APIRouter()
 
-model = torch.hub.load("ultralytics/yolov5", "yolov5s")
+# model = torch.hub.load("ultralytics/yolov5", "yolov5s")
 
 # # Load your custom YOLOv5 model (replace with your path)
 # model = torch.load('path/to/your/custom_yolo_model.pt')
