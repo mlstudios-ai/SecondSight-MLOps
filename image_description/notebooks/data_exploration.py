@@ -1,8 +1,8 @@
 """
 To perform initial exploratory analysis on the VizWiz image captioning dataset.
 It loads the dataset, computes statistics (e.g. caption lengths),
-visualizes the different scene information along with sample captions randomly to 
-understand the dataset.
+visualizes the image and captions distributions to 
+understand the dataset. The graph outputs can be found under image_description/outputs/ folder.
 """
 ## Import necessay libraries
 import os
