@@ -76,8 +76,6 @@ elif args['dataset_url']: # download from remote URL
                                                  name="base_dataset",
                                                  cache_context="hd",
                                                  force_download=True)
-    if extract_path is None:
-        raise FileNotFoundError("404", f"Found not found at URL {args['dataset_url']}") 
     
 else: # link not provided
      raise ValueError("Missing dataset link")
@@ -85,14 +83,15 @@ else: # link not provided
 if extract_path is None:
     raise FileNotFoundError("404", f"Found not found at URL {args['dataset_url']}") 
 
-extract_path += "base_dataset" # name from the Upload Base Dataset task
+# extract_path += "base_dataset" # name from the Upload Base Dataset task
+extract_path = Path(extract_path)
 print("Dataset extracted to: ", extract_path)
 
 """
 Split dataset to train, val, test
 """
 # get image file prefix that has corresponding labels
-clean_file_stems = clean_dataset_file_stems(extract_path + "/images", extract_path + "/labels")
+clean_file_stems = clean_dataset_file_stems(extract_path / "images", extract_path / "labels")
 print("clean_file_stems:", len(clean_file_stems))
 
 # split sizes
@@ -115,7 +114,7 @@ Move files to train, val, test folders
 """
 
 # base destination path for split dataset
-dest_path = Path(extract_path + "dataset")
+dest_path = Path(extract_path / "dataset")
 if os.path.exists(dest_path):
         shutil.rmtree(dest_path)
         
@@ -131,8 +130,8 @@ os.makedirs(train_labels, exist_ok=True)
 for stem in train_stems:
     image = f"{stem}.jpg" # TODO: make it geneneric to other image formats
     label = f"{stem}.txt"
-    shutil.move(extract_path + f"images/{image}", train_images / image)
-    shutil.move(extract_path + f"labels/{label}", train_labels / label)
+    shutil.move(extract_path / f"images/{image}", train_images / image)
+    shutil.move(extract_path / f"labels/{label}", train_labels / label)
      
 # validation set
 val_path = dest_path / "val"
@@ -144,8 +143,8 @@ os.makedirs(val_labels, exist_ok=True)
 for stem in val_stems:
     image = f"{stem}.jpg"
     label = f"{stem}.txt"
-    shutil.move(extract_path + f"images/{image}", val_images / image)
-    shutil.move(extract_path + f"labels/{label}", val_labels / label)
+    shutil.move(extract_path / f"images/{image}", val_images / image)
+    shutil.move(extract_path / f"labels/{label}", val_labels / label)
 
 # test set
 test_path = dest_path / "test"
@@ -157,15 +156,15 @@ os.makedirs(test_labels, exist_ok=True)
 for stem in test_stems:
     image = f"{stem}.jpg"
     label = f"{stem}.txt"
-    shutil.move(extract_path + f"images/{image}", test_images / image)
-    shutil.move(extract_path + f"labels/{label}", test_labels / label)
+    shutil.move(extract_path / f"images/{image}", test_images / image)
+    shutil.move(extract_path / f"labels/{label}", test_labels / label)
 
 data_yaml_path = dest_path / 'data.yaml'
 classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
 with open(data_yaml_path, 'w') as f:
-    f.write(f"train: {train_path}\n")
-    f.write(f"val: {val_path}\n")
-    f.write(f"test: {test_path}\n")  
+    f.write(f"train: ./{train_path.name}/images\n")
+    f.write(f"val: ./{val_path.name}/images\n")
+    f.write(f"test: ./{test_path.name}/images\n")  
     f.write(f"nc: {len(classes)}\n")
     f.write(f"names: {classes}\n")
 
