@@ -73,6 +73,7 @@ if args['dataset_name']: # download the latest from ClearML Server
     
 elif args['dataset_url']: # download from remote URL
     extract_path = StorageManager.get_local_copy(remote_url=args['dataset_url'],
+                                                 name="base_dataset",
                                                  cache_context="hd",
                                                  force_download=True)
     if extract_path is None:
