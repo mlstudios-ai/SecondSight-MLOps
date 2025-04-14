@@ -115,7 +115,7 @@ Move files to train, val, test folders
 
 # base destination path for split dataset
 dest_path = Path(extract_path + "dataset")
-os.path.exists(dest_path):
+if os.path.exists(dest_path):
         shutil.rmtree(dest_path)
         
 os.makedirs(dest_path)
