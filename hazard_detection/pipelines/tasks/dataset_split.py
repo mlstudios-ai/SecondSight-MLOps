@@ -84,6 +84,7 @@ else: # link not provided
 if extract_path is None:
     raise FileNotFoundError("404", f"Found not found at URL {args['dataset_url']}") 
 
+extract_path += "base_dataset" # name from the Upload Base Dataset task
 print("Dataset extracted to: ", extract_path)
 
 """

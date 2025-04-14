@@ -27,6 +27,7 @@ dataset_url = params['dataset_url']
 
 if dataset_url:
     hazard_dataset = StorageManager.get_local_copy(remote_url=dataset_url,
+                                                   name="base_dataset",
                                                    cache_context="hd_zip_dataset",
                                                    force_download=True)
 
