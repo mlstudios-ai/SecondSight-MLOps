@@ -65,7 +65,7 @@ task.execute_remotely(queue_name="default")
 
 if args['dataset_name']: # download the latest from ClearML Server   
     server_dataset = Dataset.get(dataset_name=args['dataset_name'], dataset_project="Hazard Detection")
-    dataset_path = server_dataset.get_local_copy()
+    extract_path = server_dataset.get_local_copy()
     
     # TODO: test if it clears cache copy 
     # TODO: configure custom cache dir
@@ -75,7 +75,7 @@ elif args['dataset_url']: # download from remote URL
     extract_path = StorageManager.get_local_copy(remote_url=args['dataset_url'],
                                                  cache_context="hd",
                                                  force_download=True)
-    if dataset_path is None:
+    if extract_path is None:
         raise FileNotFoundError("404", f"Found not found at URL {args['dataset_url']}") 
     
 else: # link not provided
@@ -91,13 +91,12 @@ Split dataset to train, val, test
 """
 # get image file prefix that has corresponding labels
 clean_file_stems = clean_dataset_file_stems(extract_path + "/images", extract_path + "/labels")
+print("clean_file_stems:", len(clean_file_stems))
 
 # split sizes
 val_size = args['val_size']
 test_size = args['test_size']
 random_state = args['random_state']
-
-print("clean_file_stems:", len(clean_file_stems))
 
 # split train, val, test sets according task args
 train_stems, remaining_stems = train_test_split(clean_file_stems, 
@@ -133,7 +132,6 @@ for stem in train_stems:
     shutil.move(extract_path + f"images/{image}", train_images / image)
     shutil.move(extract_path + f"labels/{label}", train_labels / label)
      
-
 # validation set
 val_path = dest_path / "val"
 val_images = val_path / "images"
