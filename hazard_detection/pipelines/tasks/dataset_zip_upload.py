@@ -37,7 +37,7 @@ if dataset_url:
         raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
 
     dataset = Dataset.create(
-        dataset_project="Hazard Detection", dataset_name="dataset_zip"
+        dataset_project="Hazard Detection", dataset_name="base_dataset"
     )
 
     dataset.add_files(path=hazard_dataset)
