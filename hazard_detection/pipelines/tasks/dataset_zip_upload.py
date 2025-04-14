@@ -13,41 +13,33 @@ labels/
 
 task = Task.init(project_name="Hazard Detection", 
                 task_name="Upload ZIP Dataset", 
-                task_type=Task.TaskTypes.data_processing)
+                task_type=Task.TaskTypes.data_processing,
+                reuse_last_task_id=True)
 
 params = {
-    'dataset_url': 'https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/mini.zip'
+    'dataset_url': ''
 }
 
 task.connect(params)
-
-print("params=", params)
-
-
 task.execute_remotely(queue_name="default")
 
 dataset_url = params['dataset_url']
 
-if not dataset_url:
-    raise ValueError("No dataset URL provided!")
+if dataset_url:
+    hazard_dataset = StorageManager.get_local_copy(remote_url=dataset_url,
+                                                   cache_context="hd_zip_dataset",
+                                                   force_download=True)
 
-hazard_dataset = StorageManager.get_local_copy(remote_url=dataset_url)
+    print("Downloading to: ", hazard_dataset)
 
-print("Downloading to: ", hazard_dataset)
+    if hazard_dataset is None:
+        # Error: Assume file not found (404 http status code)
+        raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
 
-if hazard_dataset is None:
-    # StorageManage can not find or access the file, assume file not 
-    # found (404 http status code)
-    raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
+    dataset = Dataset.create(
+        dataset_project="Hazard Detection", dataset_name="dataset_zip"
+    )
 
-# task.upload_artifact('dataset', artifact_object=hazard_dataset)
-dataset = Dataset.create(
-    dataset_project="Hazard Detection", dataset_name="dataset_mini_zip"
-)
+    dataset.add_files(path=hazard_dataset)
 
-dataset.add_files(path=hazard_dataset)
-
-print('uploading artifacts in the background')
-
-# we are done
-print('Done')
+    print('Uploading dataset in the background')
