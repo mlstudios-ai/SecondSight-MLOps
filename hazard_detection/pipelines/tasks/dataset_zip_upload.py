@@ -43,3 +43,6 @@ if dataset_url:
     dataset.add_files(path=hazard_dataset)
 
     print('Uploading dataset in the background')
+
+    dataset.upload()
+    dataset.finalize()
