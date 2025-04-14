@@ -48,7 +48,7 @@ labels/
 """
 
 task = Task.init(project_name="Hazard Detection", 
-                task_name="Split and Upload Dataset", 
+                task_name="Split Dataset", 
                 task_type=Task.TaskTypes.data_processing)
 
 args = {

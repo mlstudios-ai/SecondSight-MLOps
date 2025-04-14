@@ -12,7 +12,7 @@ labels/
 """
 
 task = Task.init(project_name="Hazard Detection", 
-                task_name="Extract and Upload Dataset", 
+                task_name="Upload Base Dataset", 
                 task_type=Task.TaskTypes.data_processing,
                 reuse_last_task_id=True)
 
