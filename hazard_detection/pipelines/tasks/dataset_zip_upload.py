@@ -17,7 +17,7 @@ task = Task.init(project_name="Hazard Detection",
                 reuse_last_task_id=True)
 
 params = {
-    'dataset_url': ''
+    'dataset_url': 'https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/mini.zip'
 }
 
 task.connect(params)
