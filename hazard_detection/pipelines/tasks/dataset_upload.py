@@ -52,7 +52,7 @@ The extracted dataset will be in train/val/test ration using the 'test' param se
 
 task = Task.init(project_name="Hazard Detection", 
                 task_name="Extract ZIP and Upload Dataset", 
-                task_type=Task.TaskTypes.data_preprocessing)
+                task_type=Task.TaskTypes.data_processing)
 
 args = {
     'dataset_name': 'dataset_zip',
