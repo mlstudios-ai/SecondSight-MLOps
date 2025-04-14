@@ -3,7 +3,7 @@ import os
 from clearml import Task, Dataset, StorageManager
 
 """
-Upload zipped YOLO dataset file from remote URL to ClearML server as an artifact. 
+Upload zipped YOLO dataset file from remote URL, extract and upload to ClearML server. 
 The zipped file needs to contain the YAML file and assets in the following structure:
 
 data.yaml
@@ -12,7 +12,7 @@ labels/
 """
 
 task = Task.init(project_name="Hazard Detection", 
-                task_name="Upload ZIP Dataset", 
+                task_name="Extract and Upload Dataset", 
                 task_type=Task.TaskTypes.data_processing,
                 reuse_last_task_id=True)
 
