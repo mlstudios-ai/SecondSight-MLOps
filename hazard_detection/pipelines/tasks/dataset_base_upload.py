@@ -25,25 +25,31 @@ task.execute_remotely(queue_name="default")
 
 dataset_url = params['dataset_url']
 
-if dataset_url:
-    hazard_dataset = StorageManager.get_local_copy(remote_url=dataset_url,
-                                                   name="base_dataset",
-                                                   cache_context="hd_zip_dataset",
-                                                   force_download=True)
+if not dataset_url:
+    raise ValueError("Missing dataset url")
 
-    print("Downloading to: ", hazard_dataset)
+# download zip dataset from remote url and extract to local disk
+hazard_dataset = StorageManager.get_local_copy(remote_url=dataset_url,
+                                                name="base_dataset",
+                                                cache_context="hd_zip_dataset",
+                                                force_download=True)
 
-    if hazard_dataset is None:
-        # Error: Assume file not found (404 http status code)
-        raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
+if hazard_dataset is None:
+    # Error: Assume file not found (404 http status code)
+    raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
 
-    dataset = Dataset.create(
-        dataset_project="Hazard Detection", dataset_name="base_dataset"
-    )
+print("Downloaded to: ", hazard_dataset)
 
-    dataset.add_files(path=hazard_dataset)
+# upload dataset to ClearML server
+dataset = Dataset.create(
+    dataset_project="Hazard Detection", dataset_name="base_dataset"
+)
 
-    print('Uploading dataset in the background')
+dataset.add_files(path=hazard_dataset)
 
-    dataset.upload()
-    dataset.finalize()
+print('Uploading dataset in the background')
+
+dataset.upload()
+dataset.finalize()
+
+# TODO: log data visualisation

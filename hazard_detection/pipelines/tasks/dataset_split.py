@@ -63,25 +63,29 @@ logger = task.get_logger()
 task.connect(args)
 task.execute_remotely(queue_name="default")
 
-if args['dataset_name']: # download the latest from ClearML Server   
-    server_dataset = Dataset.get(dataset_name=args['dataset_name'], dataset_project="Hazard Detection")
+
+# download dataset 
+dataset_name = params['dataset_name']
+dataset_url = params['dataset_url']
+
+if dataset_name: # download the latest from ClearML Server   
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project="Hazard Detection")
     extract_path = server_dataset.get_local_copy()
     
     # TODO: test if it clears cache copy 
     # TODO: configure custom cache dir
     # TODO: use logger
     
-elif args['dataset_url']: # download from remote URL
-    extract_path = StorageManager.get_local_copy(remote_url=args['dataset_url'],
+elif dataset_url: # download from remote URL
+    extract_path = StorageManager.get_local_copy(remote_url=dataset_url,
                                                  name="base_dataset",
                                                  cache_context="hd",
-                                                 force_download=True)
+                                                 force_download=True)    
+    if extract_path is None:
+        raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
     
 else: # link not provided
-     raise ValueError("Missing dataset link")
-
-if extract_path is None:
-    raise FileNotFoundError("404", f"Found not found at URL {args['dataset_url']}") 
+     raise ValueError("Missing param dataset_url")
 
 # extract_path += "base_dataset" # name from the Upload Base Dataset task
 extract_path = Path(extract_path)
@@ -115,8 +119,8 @@ Move files to train, val, test folders
 
 # base destination path for split dataset
 dest_path = Path(extract_path / "dataset")
-if os.path.exists(dest_path):
-        shutil.rmtree(dest_path)
+if os.path.exists(dest_path): 
+        shutil.rmtree(dest_path) # remove old data
         
 os.makedirs(dest_path)
 
@@ -159,6 +163,7 @@ for stem in test_stems:
     shutil.move(extract_path / f"images/{image}", test_images / image)
     shutil.move(extract_path / f"labels/{label}", test_labels / label)
 
+# contruct YAML config file
 data_yaml_path = dest_path / 'data.yaml'
 classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
 with open(data_yaml_path, 'w') as f:
@@ -168,12 +173,16 @@ with open(data_yaml_path, 'w') as f:
     f.write(f"nc: {len(classes)}\n")
     f.write(f"names: {classes}\n")
 
+# upload dataset to ClearML server
 dataset = Dataset.create(
     dataset_project="Hazard Detection", dataset_name="dataset"
 )
 
-# add all elements to dataset
 dataset.add_files(path=dest_path)
+
+print('Uploading dataset in the background')
 
 dataset.upload()
 dataset.finalize()
+
+# TODO: log data visualisation
