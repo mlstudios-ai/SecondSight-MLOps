@@ -1,8 +1,8 @@
 from clearml import Task, Dataset, StorageManager
 from pathlib import Path
 import uuid
-import torch
-from ultralytics import YOLO
+# import torch
+# from ultralytics import YOLO
 
 """
 Train YOLOv11 model using the latest split dataset stored on ClearML server.
@@ -24,7 +24,7 @@ there is a new version to prevent repeat downloads, especially with a large data
 
 task = Task.init(project_name="Hazard Detection", 
                 task_name="Model Training", 
-                task_type=Task.TaskTypes.data_processing)
+                task_type=Task.TaskTypes.training)
 
 params = {
     'dataset_id': '',                       # specific version of the dataset
@@ -37,7 +37,7 @@ params = {
 
 # TODO: check params and download model from ClearML
 
-# logger = task.get_logger()
+logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="training")
 
@@ -46,46 +46,46 @@ task.execute_remotely(queue_name="training")
 Prepare dataset.
 """
 
-# # download dataset from ClearML server
-# dataset_id = params['dataset_id']
-# dataset_name = params['dataset_name']
+# download dataset from ClearML server
+dataset_id = params['dataset_id']
+dataset_name = params['dataset_name']
 
-# if dataset_id: # get specific dataset
-#     server_dataset = Dataset.get(dataset_id=dataset_id, dataset_project="Hazard Detection")
-# elif dataset_name: # get the latest
-#     server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project="Hazard Detection")
-# else:
-#     raise ValueError("Missing param dataset_id and dataset_name. Provide at least one.")
+if dataset_id: # get specific dataset
+    server_dataset = Dataset.get(dataset_id=dataset_id, dataset_project="Hazard Detection")
+elif dataset_name: # get the latest
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project="Hazard Detection")
+else:
+    raise ValueError("Missing param dataset_id and dataset_name. Provide at least one.")
 
-# extract_path = server_dataset.get_local_copy()
+extract_path = server_dataset.get_local_copy()
 
-# print("Downloaded dataset to: ", extract_path)
+print("Downloaded dataset to: ", extract_path)
 
 
-# """
-# Model training.
-# """
+"""
+Model training.
+"""
 
-# working_dir = params['local_working_directory']
-# if not working_dir:
-#     raise ValueError("Missing param local_working_directory.")
+working_dir = params['local_working_directory']
+if not working_dir:
+    raise ValueError("Missing param local_working_directory.")
 
-# # create new dir for current training task
-# working_dir = Path(working_dir) / uuid.uuid4().hex
-# working_dir.mkdir(parents=True)
-# print("Working directory created:", working_dir)
+# create new dir for current training task
+working_dir = Path(working_dir) / uuid.uuid4().hex
+working_dir.mkdir(parents=True)
+print("Working directory created:", working_dir)
 
-# # contruct YAML config file
-# data_yaml_path = working_dir / 'data.yaml'
-# classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
-# with open(data_yaml_path, 'w') as f:
-#     f.write(f"train: {extract_path}train/images\n")
-#     f.write(f"val: {extract_path}/val/images\n")
-#     f.write(f"test: {extract_path}/test/images\n")  
-#     f.write(f"nc: {len(classes)}\n")
-#     f.write(f"names: {classes}\n")
+# contruct YAML config file
+data_yaml_path = working_dir / 'data.yaml'
+classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
+with open(data_yaml_path, 'w') as f:
+    f.write(f"train: {extract_path}/train/images\n")
+    f.write(f"val: {extract_path}/val/images\n")
+    f.write(f"test: {extract_path}/test/images\n")  
+    f.write(f"nc: {len(classes)}\n")
+    f.write(f"names: {classes}\n")
     
-# print("YAML file created at: ", data_yaml_path)
+print("YAML file created at: ", data_yaml_path)
 
 # # train the model
 # device_name = "cpu"
@@ -99,31 +99,37 @@ Prepare dataset.
 #     print("No GPU available. Using CPU instead.")
 
 # model_variant = params["model_variant"]
-# # model = YOLO(f"{model_variant}.pt")
+# model = YOLO(f"https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/yolo11s.pt")
 
 # print(f"Training {model_variant} model using {device_name}.")
 
-# results = model.train(
-#     data=str(data_yaml_path),
-#     epochs=100,
-#     imgsz=640,
-#     batch=8,
-#     lr0=0.0003,
-#     warmup_epochs=3,
-#     device=device_name,
-#     name="cvat_v4_smoother",
-#     project=str(working_dir),   # custom output path
-#     patience=10,
-#     verbose=True,
-#     plots=True,
-#     augment=True,
-#     mosaic=0,
-#     mixup=0,
-#     degrees=5,
-#     translate=0.05,
-#     scale=0.1,
-#     shear=0.0,
-#     hsv_h=0.005,             # lower color jitter
-#     hsv_s=0.3,
-#     hsv_v=0.2
-#     )
+# args = dict(data=data_yaml_path, epochs=16, project=str(working_dir), device=device_name)
+# task.connect(args)
+
+# # Step 5: Initiating Model Training
+# results = model.train(**args)
+
+# # results = model.train(
+# #     data=str(data_yaml_path),
+# #     epochs=3,
+# #     imgsz=640,
+# #     batch=8,
+# #     lr0=0.0003,
+# #     warmup_epochs=3,
+# #     device=device_name,
+# #     name="cvat_v4_smoother",
+# #     project=str(working_dir),   # custom output path
+# #     patience=10,
+# #     verbose=True,
+# #     plots=True,
+# #     augment=True,
+# #     mosaic=0,
+# #     mixup=0,
+# #     degrees=5,
+# #     translate=0.05,
+# #     scale=0.1,
+# #     shear=0.0,
+# #     hsv_h=0.005,             # lower color jitter
+# #     hsv_s=0.3,
+# #     hsv_v=0.2
+# #     )
