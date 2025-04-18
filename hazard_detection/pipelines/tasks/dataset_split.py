@@ -5,6 +5,8 @@ import shutil
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from clearml import Task, Dataset, StorageManager
+# from enigmaai.config import Project, Config, ConfigFactory
+# project package does not load on remote worker
 
 def clean_dataset_file_stems(images_path, labels_path):
     """
@@ -47,11 +49,16 @@ images/
 labels/
 """
 
-task = Task.init(project_name="Hazard Detection", 
+# get project configurations
+# project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
+# project_name = project.get('project-name')
+project_name="Detection"
+
+task = Task.init(project_name=project_name, 
                 task_name="Split Dataset", 
                 task_type=Task.TaskTypes.data_processing)
 
-args = {
+params = {
     'dataset_name': 'base_dataset',
     'dataset_url': 'https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/mini.zip',
     'random_state': 42,
@@ -60,7 +67,7 @@ args = {
 }
 
 logger = task.get_logger()
-task.connect(args)
+task.connect(params)
 task.execute_remotely(queue_name="default")
 
 
@@ -69,7 +76,7 @@ dataset_name = params['dataset_name']
 dataset_url = params['dataset_url']
 
 if dataset_name: # download the latest from ClearML Server   
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project="Hazard Detection")
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name)
     extract_path = server_dataset.get_local_copy()
     
     # TODO: test if it clears cache copy 
@@ -99,11 +106,11 @@ clean_file_stems = clean_dataset_file_stems(extract_path / "images", extract_pat
 print("clean_file_stems:", len(clean_file_stems))
 
 # split sizes
-val_size = args['val_size']
-test_size = args['test_size']
-random_state = args['random_state']
+val_size = params['val_size']
+test_size = params['test_size']
+random_state = params['random_state']
 
-# split train, val, test sets according task args
+# split train, val, test sets according task params
 train_stems, remaining_stems = train_test_split(clean_file_stems, 
                                          test_size = val_size + test_size, 
                                          random_state=random_state)
@@ -175,7 +182,7 @@ with open(data_yaml_path, 'w') as f:
 
 # upload dataset to ClearML server
 dataset = Dataset.create(
-    dataset_project="Hazard Detection", dataset_name="dataset"
+    dataset_project=project_name, dataset_name="dataset"
 )
 
 dataset.add_files(path=dest_path)

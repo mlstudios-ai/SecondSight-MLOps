@@ -45,7 +45,7 @@ params = {
 
 logger = task.get_logger()
 task.connect(params)
-# task.execute_remotely(queue_name="training")
+task.execute_remotely(queue_name="training")
 
 
 """
@@ -142,9 +142,9 @@ results = model.train(
     hsv_v=0.2
     )
 
-model_saved_path = working_dir / model_variant / "train/weights/best.pt"
-task.upload_artifact(name=model_variant, artifact_object=model_saved_path, wait_on_upload=True)
-task.flush(wait_for_uploads=True) 
+# model_saved_path = working_dir / model_variant / "train/weights/best.pt"
+# task.upload_artifact(name=model_variant, artifact_object=model_saved_path)
+# task.flush() 
 
 # all uploaded finised, clean up temp output dir
 # shutil.rmtree(working_dir) # clean up temp output
