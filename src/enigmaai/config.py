@@ -2,11 +2,15 @@ from pathlib import Path
 import yaml
 from enum import Enum
 
+# current projects. 
 class Project(Enum):
     HAZARD_DETECTION = "hazard_detection/config.yaml"
     SCENE_DESCRIPTION = "image_description/config.yaml"
     
 class Config:
+    """
+    Initialise from a file path. Use ConfigFactory instead.
+    """
     def __init__(self, config_path: Path):
         if not config_path.exists():
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -22,6 +26,9 @@ class Config:
 
 
 class ConfigFactory:
+    """
+    Use Project enum or custom file path from project root.
+    """
     BASE_DIR = Path(__file__).parent.parent.parent
 
     @staticmethod
