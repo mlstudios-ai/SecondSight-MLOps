@@ -7,6 +7,9 @@ The applicaiton requires a live camera input for object detection using YOLO and
 1. Standalone - Hazard object detection with haptic feedback. No speech description.
 2. Plus - With additional speech description upon detection and at request
 
+## Run setup for core package
+`pip install -e .`
+
 This project consists 4 components.
 
 ## Cloning fom GitHub 
