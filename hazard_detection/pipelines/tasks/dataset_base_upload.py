@@ -1,6 +1,8 @@
 import argparse
 import os
+import sys
 from clearml import Task, Dataset, StorageManager
+from enigmaai.config import Project, Config, ConfigFactory
 
 """
 Upload zipped YOLO dataset file from remote URL, extract and upload to ClearML server. 
@@ -11,7 +13,11 @@ images/
 labels/
 """
 
-task = Task.init(project_name="Hazard Detection", 
+# get project configurations
+project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
+project_name = project.get('project-name')
+
+task = Task.init(project_name=project_name, 
                 task_name="Upload Base Dataset", 
                 task_type=Task.TaskTypes.data_processing,
                 reuse_last_task_id=True)
@@ -42,7 +48,7 @@ print("Downloaded to: ", hazard_dataset)
 
 # upload dataset to ClearML server
 dataset = Dataset.create(
-    dataset_project="Hazard Detection", dataset_name="base_dataset"
+    dataset_project=project_name, dataset_name="base_dataset"
 )
 
 dataset.add_files(path=hazard_dataset)
