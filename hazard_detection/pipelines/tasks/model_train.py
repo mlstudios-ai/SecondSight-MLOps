@@ -1,4 +1,4 @@
-from clearml import Task, Dataset, StorageManager
+from clearml import Task, Dataset
 from pathlib import Path
 import shutil
 import tempfile
@@ -43,7 +43,8 @@ params = {
 
 # TODO: check params and download model from ClearML
 
-logger = task.get_logger()
+# logger = task.get_logger()
+task.add_requirements('numpy', '==1.26.4')
 task.connect(params)
 task.execute_remotely(queue_name="training")
 
@@ -55,11 +56,12 @@ Prepare dataset.
 # download dataset from ClearML server
 dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']
+model_variant = params["model_variant"]
 
 if dataset_id: # get specific dataset
-    server_dataset = Dataset.get(dataset_id=dataset_id, dataset_project=project_name)
+    server_dataset = Dataset.get(dataset_id=dataset_id, dataset_project=project_name, alias=model_variant)
 elif dataset_name: # get the latest
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name)
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, alias=model_variant)
 else:
     raise ValueError("Missing param dataset_id and dataset_name. Provide at least one.")
 
@@ -68,9 +70,9 @@ extract_path = server_dataset.get_local_copy()
 print("Downloaded dataset to: ", extract_path)
 
 
-"""
-Model training.
-"""
+# """
+# Model training.
+# """
 
 # use temp director for output before uploading to ClearML
 working_dir = Path(tempfile.mkdtemp()) / project_name
@@ -101,46 +103,46 @@ elif torch.backends.mps.is_available():
 else:
     print("No GPU available. Using CPU instead.")
 
-model_variant = params["model_variant"]
 model = YOLO(f"https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/{model_variant}.pt")
 
 print(f"Training {model_variant} model using {device_name}.")
 
-# args = dict(data=data_yaml_path, epochs=2, project=working_dir, device=device_name)
-# task.connect(args)
+args = dict(data=data_yaml_path, epochs=2, project=working_dir, device=device_name)
+task.connect(args)
 
 # # Step 5: Initiating Model Training
-# results = model.train(**args)
+results = model.train(**args)
 
-# task.upload_artifact(name="my_model", artifact_object=model_path)
+# model_saved_path = working_dir / model_variant / "train/weights/best.pt"
+# task.upload_artifact(name=model_variant, artifact_object=model_saved_path)
 # task.flush() 
 
 # shutil.rmtree(working_dir) # clean up temp output
 
-results = model.train(
-    data=str(data_yaml_path),
-    epochs=10,
-    imgsz=640,
-    batch=8,
-    lr0=0.0003,
-    warmup_epochs=3,
-    device=device_name,
-    name=model_variant,
-    project=str(working_dir),   # custom output path
-    patience=10,
-    verbose=True,
-    plots=True,
-    augment=True,
-    mosaic=0,
-    mixup=0,
-    degrees=5,
-    translate=0.05,
-    scale=0.1,
-    shear=0.0,
-    hsv_h=0.005,             # lower color jitter
-    hsv_s=0.3,
-    hsv_v=0.2
-    )
+# results = model.train(
+#     data=str(data_yaml_path),
+#     epochs=2,
+#     imgsz=640,
+#     batch=8,
+#     lr0=0.0003,
+#     warmup_epochs=3,
+#     device=device_name,
+#     name=model_variant,
+#     project=str(working_dir),   # custom output path
+#     patience=10,
+#     verbose=True,
+#     plots=True,
+#     augment=True,
+#     mosaic=0,
+#     mixup=0,
+#     degrees=5,
+#     translate=0.05,
+#     scale=0.1,
+#     shear=0.0,
+#     hsv_h=0.005,             # lower color jitter
+#     hsv_s=0.3,
+#     hsv_v=0.2
+#     )
 
 # model_saved_path = working_dir / model_variant / "train/weights/best.pt"
 # task.upload_artifact(name=model_variant, artifact_object=model_saved_path)
