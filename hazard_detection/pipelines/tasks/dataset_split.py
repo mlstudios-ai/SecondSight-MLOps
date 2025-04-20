@@ -1,5 +1,3 @@
-import zipfile
-import tempfile
 import os
 import shutil
 from pathlib import Path
@@ -49,6 +47,7 @@ images/
 labels/
 """
 
+# NOT WORKING: setup.py not running on execute_remotely, hence can not import enigmaai package
 # get project configurations
 # project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 # project_name = project.get('project-name')
@@ -76,40 +75,39 @@ dataset_id = params['base_dataset_id']
 dataset_name = params['base_dataset_name']
 dataset_url = params['base_dataset_url']
 
+# validate task input params
 if not dataset_id and not dataset_name and not dataset_url:
     task.mark_completed(status_message="No dataset provided. Nothing to process.")
     exit(0)
 
-if dataset_id: # download the specific dataset from ClearML Server   
-    server_dataset = Dataset.get(dataset_id=dataset_id, dataset_project=project_name)
+if dataset_id: 
+    # download the specific dataset from ClearML Server   
+    server_dataset = Dataset.get(dataset_id=dataset_id)
     extract_path = server_dataset.get_local_copy()
-
-elif dataset_name: # download the latest from ClearML Server   
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name)
-    extract_path = server_dataset.get_local_copy()
-    
-    # TODO: test if it clears cache copy 
-    # TODO: configure custom cache dir
-    # TODO: use logger
-    
-elif dataset_url: # download from remote URL
+    print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
+elif dataset_name: 
+    # download the latest registered dataset
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, only_completed=True)
+    extract_path = server_dataset.get_local_copy()          
+    print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
+elif dataset_url: 
+    # download from remote URL
     extract_path = StorageManager.get_local_copy(remote_url=dataset_url,
                                                  name="base_dataset",
                                                  cache_context="hd",
                                                  force_download=True)    
     if extract_path is None:
-        raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
-    
+        raise FileNotFoundError("404", f"Found not found at URL {dataset_url}")    
+    print(f"Downloaded dataset from:{dataset_url} to: {extract_path}") 
 else: # link not provided
      raise ValueError("Missing param dataset_url")
 
-# extract_path += "base_dataset" # name from the Upload Base Dataset task
 extract_path = Path(extract_path)
-print("Dataset extracted to: ", extract_path)
 
 """
 Split dataset to train, val, test
 """
+
 # get image file prefix that has corresponding labels
 clean_file_stems = clean_dataset_file_stems(extract_path / "images", extract_path / "labels")
 print("clean_file_stems:", len(clean_file_stems))
@@ -127,7 +125,6 @@ train_stems, remaining_stems = train_test_split(clean_file_stems,
 val_stems, test_stems = train_test_split(remaining_stems, 
                                          test_size=test_size/(val_size + test_size), 
                                          random_state=random_state) 
-
 
 """
 Move files to train, val, test folders
