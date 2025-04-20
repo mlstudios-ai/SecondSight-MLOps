@@ -24,21 +24,21 @@ task = Task.init(project_name=project_name,
                 reuse_last_task_id=True)
 
 params = {
-    'dataset_url': 'https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/mini.zip'
+    'dataset_url': ''
 }
 
 task.connect(params)
 task.execute_remotely(queue_name="default")
 
 dataset_url = params['dataset_url']
-
 if not dataset_url:
-    raise ValueError("Missing dataset url")
+    task.mark_completed(status_message="No dataset URL provided. Nothing to upload.")
+    exit(0)
 
 # download zip dataset from remote url and extract to local disk
 hazard_dataset = StorageManager.get_local_copy(remote_url=dataset_url,
                                                 name="base_dataset",
-                                                cache_context="hd_zip_dataset",
+                                                cache_context="zip_dataset",
                                                 force_download=True)
 
 if hazard_dataset is None:
@@ -58,5 +58,9 @@ print('Uploading dataset in the background')
 
 dataset.upload()
 dataset.finalize()
+
+task.set_parameter("output_dataset_project", dataset.project)
+task.set_parameter("output_dataset_id", dataset.id)
+task.set_parameter("output_dataset_name", dataset.name)
 
 # TODO: log data visualisation

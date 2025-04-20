@@ -1,5 +1,7 @@
-from clearml import Task, Dataset
+from clearml import Task, Dataset, Model
 from pathlib import Path
+import yaml
+import os
 import shutil
 import tempfile
 import torch
@@ -22,12 +24,16 @@ IMPORTANT: The dataset will be downloaded to a cached directory and will NOT be 
 local_working_directory. This is to preserve the built-in caching mechanism of 
 Dataset.get_local_copy(). Caching keep tracks of changes in datdaset and only download if 
 there is a new version to prevent repeat downloads, especially with a large dataset.
+
+NOTE: this is for training only, model evaluation task with compare and register the best model.
 """
 
 # get project configurations
 # project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 # project_name = project.get('project-name')
 project_name="Detection"
+Task.add_requirements('numpy', '==1.26.4')
+Task.add_requirements('pytorch', '')
 
 task = Task.init(project_name=project_name, 
                 task_name="Model Training", 
@@ -36,26 +42,27 @@ task = Task.init(project_name=project_name,
 params = {
     'dataset_id': '',                       # specific version of the dataset
     'dataset_name': 'dataset',              # latest dataset
-    'model_artifact_id': '',                # specific version of the model
-    'model_artifact_name': '',              # latest model
+    'model_id': '',                         # specific version of the model artifact id
+    'model_name': '',                       # latest model artifact name
     'model_variant': 'yolo11n',             # base model variant from ultralytics if no model artifact given
+    'hyperparameters':  {}                  # dictionaryo of hyperparameters
 }
 
 # TODO: check params and download model from ClearML
 
 # logger = task.get_logger()
-task.add_requirements('numpy', '==1.26.4')
 task.connect(params)
-task.execute_remotely(queue_name="training")
+# task.execute_remotely(queue_name="training")
 
 
 """
 Prepare dataset.
 """
 
-# download dataset from ClearML server
 dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']
+model_id = params['model_id']
+model_name = params['model_name']
 model_variant = params["model_variant"]
 
 if dataset_id: # get specific dataset
@@ -63,7 +70,7 @@ if dataset_id: # get specific dataset
 elif dataset_name: # get the latest
     server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, alias=model_variant)
 else:
-    raise ValueError("Missing param dataset_id and dataset_name. Provide at least one.")
+    raise ValueError("Missing dataset. Please provide dataset_id or dataset_name.")
 
 extract_path = server_dataset.get_local_copy()
 
@@ -102,51 +109,47 @@ elif torch.backends.mps.is_available():
     print("MPS is available (Apple Silicon GPU)")
 else:
     print("No GPU available. Using CPU instead.")
-
-model = YOLO(f"https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/{model_variant}.pt")
+    
+# get the previous trained model. If not found, download the original YOLO pretrained variants.
+if model_id:        # get the specific model
+    server_model = Model(model_id=model_id)
+elif model_name:    # get the latest from Model Registry
+    model = Model.query_models(project_name=project_name, model_name=model_name, only_published=True)
+elif model_variant: # download base model from Ultralytics repo
+    model = YOLO(f"https://github.com/ultralytics/assets/releases/download/v8.3.0/{model_variant}.pt")
+else:
+    raise ValueError("Missing model. Please provide model_artifact_id, model_artifact_name, or model_variant")
 
 print(f"Training {model_variant} model using {device_name}.")
 
-args = dict(data=data_yaml_path, epochs=2, project=working_dir, device=device_name)
-task.connect(args)
+hyperparameters = params["hyperparameters"]
 
-# # Step 5: Initiating Model Training
-results = model.train(**args)
+# temporary use file for testing
+if not hyperparameters: # use default config from github repo 
+    variant_train_config = f"./{model_variant}_hyp_config.yaml"
+    if not os.path.exists(variant_train_config):    
+        with open(variant_train_config, "r") as file:
+            hyperparameters = yaml.safe_load(file)
 
-# model_saved_path = working_dir / model_variant / "train/weights/best.pt"
-# task.upload_artifact(name=model_variant, artifact_object=model_saved_path)
-# task.flush() 
+hyperparameters["data"] = str(data_yaml_path)
+hyperparameters["name"] = model_variant
+hyperparameters["device"] = device_name
+hyperparameters["project"] = str(working_dir)
 
-# shutil.rmtree(working_dir) # clean up temp output
+task.connect(hyperparameters)
 
-# results = model.train(
-#     data=str(data_yaml_path),
-#     epochs=2,
-#     imgsz=640,
-#     batch=8,
-#     lr0=0.0003,
-#     warmup_epochs=3,
-#     device=device_name,
-#     name=model_variant,
-#     project=str(working_dir),   # custom output path
-#     patience=10,
-#     verbose=True,
-#     plots=True,
-#     augment=True,
-#     mosaic=0,
-#     mixup=0,
-#     degrees=5,
-#     translate=0.05,
-#     scale=0.1,
-#     shear=0.0,
-#     hsv_h=0.005,             # lower color jitter
-#     hsv_s=0.3,
-#     hsv_v=0.2
-#     )
+results = model.train(**hyperparameters)
 
-# model_saved_path = working_dir / model_variant / "train/weights/best.pt"
-# task.upload_artifact(name=model_variant, artifact_object=model_saved_path)
-# task.flush() 
+# upload results for report analysis reference
+result_file = working_dir / model_variant / "results.csv"
+task.upload_artifact(name="results", artifact_object=result_file)
+task.flush() 
 
-# all uploaded finised, clean up temp output dir
-# shutil.rmtree(working_dir) # clean up temp output
+task.set_parameter("output_model_project", project_name)
+task.set_parameter("output_model_id", task.models.output[-1].id)
+task.set_parameter("output_model_name", task.models.output[-1].name)
+task.set_parameter("output_model_variant", model_variant)
+
+# # shutil.rmtree(working_dir) # clean up output temp files
+
+task.mark_completed(status_message=f"Completed training {model_variant} with model output '{task.get_parameter("output_model_name")} ({task.get_parameter("output_model_id")})'.")

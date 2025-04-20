@@ -59,23 +59,32 @@ task = Task.init(project_name=project_name,
                 task_type=Task.TaskTypes.data_processing)
 
 params = {
-    'dataset_name': 'base_dataset',
-    'dataset_url': 'https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/mini.zip',
+    'base_dataset_id': '',
+    'base_dataset_name': '',
+    'base_dataset_url': '',
     'random_state': 42,
     'val_size': 0.15,
     'test_size': 0.15,
 }
 
-logger = task.get_logger()
+# logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="default")
 
-
 # download dataset 
-dataset_name = params['dataset_name']
-dataset_url = params['dataset_url']
+dataset_id = params['base_dataset_id']
+dataset_name = params['base_dataset_name']
+dataset_url = params['base_dataset_url']
 
-if dataset_name: # download the latest from ClearML Server   
+if not dataset_id and not dataset_name and not dataset_url:
+    task.mark_completed(status_message="No dataset provided. Nothing to process.")
+    exit(0)
+
+if dataset_id: # download the specific dataset from ClearML Server   
+    server_dataset = Dataset.get(dataset_id=dataset_id, dataset_project=project_name)
+    extract_path = server_dataset.get_local_copy()
+
+elif dataset_name: # download the latest from ClearML Server   
     server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name)
     extract_path = server_dataset.get_local_copy()
     
@@ -191,5 +200,9 @@ print('Uploading dataset in the background')
 
 dataset.upload()
 dataset.finalize()
+
+task.set_parameter("output_dataset_project", dataset.project)
+task.set_parameter("output_dataset_id", dataset.id)
+task.set_parameter("output_dataset_name", dataset.name)
 
 # TODO: log data visualisation
