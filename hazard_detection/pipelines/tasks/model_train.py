@@ -34,7 +34,7 @@ NOTE: this is for training only, model evaluation task with compare and register
 # project_name = project.get('project-name')
 project_name="Detection"
 Task.add_requirements('numpy', '==1.26.4')
-Task.add_requirements('pytorch', '')
+# Task.add_requirements('pytorch', '')
 
 task = Task.init(project_name=project_name, 
                 task_name="Model Training", 
@@ -44,7 +44,6 @@ params = {
     'dataset_id': '',                       # specific version of the dataset
     'dataset_name': '',              # latest registered dataset
     'model_id': '',                         # specific version of the model 
-    'model_name': '',                       # latest registered model
     'model_variant': '',             # base model variant from ultralytics if no model given
     'hyperparameters':  {}                  # dictionary of hyperparameters for training
 }
@@ -56,8 +55,9 @@ task.connect(params)
 dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']
 model_id = params['model_id']
-model_name = params['model_name']
 model_variant = params["model_variant"]
+model_name = model_variant
+hyperparameters = params["hyperparameters"]
 
 # validate task input params
 if not dataset_id and not dataset_name:
@@ -67,6 +67,9 @@ if not dataset_id and not dataset_name:
 # Mandatory input param
 if not model_variant:
     raise ValueError("Missing model variant. Please provide model_variant.")
+
+if not hyperparameters:
+    raise ValueError("Missing hyperparameters. Please provide hyperparameters for YOLO.train().")
 
 """
 Prepare dataset.
@@ -126,17 +129,7 @@ elif model_name:    # get the latest from Model Registry
         input_model_path = server_model.get_local_copy(raise_on_error=True)
         print(f"Downloaded model name: {server_model.name} id:{server_model.id} to: {input_model_path}")        
     else:
-        raise ValueError(f"No registered model found with name '{model_name}'. Please publish model or use a different name.")
-
-hyperparameters = params["hyperparameters"]
-
-# temporary use file for testing
-if not hyperparameters: # use default config from code base
-    hyp_config_path = Path(__file__).parent.parent / f"./{model_variant}_hyp_config.yaml"
-    print("hyp_config_path=", hyp_config_path.resolve())
-    if hyp_config_path.exists():    
-        with open(hyp_config_path, "r") as file:
-            hyperparameters = yaml.safe_load(file)
+        print (f"No registered model found with name '{model_name}'. Using {model_variant} base model from Ultralytics.")
 
 # training input params: hyp + other data
 train_args = hyperparameters.copy() # copy to prevent altering original by reference
@@ -154,7 +147,7 @@ print(f"Training {model_variant} model using {device_name}.")
 results = model.train(**train_args)
 
 # upload results reference for report analysis 
-task.upload_artifact(name="{model_variant}_hyp_config", artifact_object=hyperparameters)
+task.upload_artifact(name=f"{model_variant}_hyp_config", artifact_object=hyperparameters)
 result_file = working_dir / model_variant / "results.csv"
 task.upload_artifact(name="results", artifact_object=result_file)
 task.flush() 

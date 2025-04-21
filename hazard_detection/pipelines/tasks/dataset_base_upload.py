@@ -1,6 +1,3 @@
-import argparse
-import os
-import sys
 from clearml import Task, Dataset, StorageManager
 # from enigmaai.config import Project, Config, ConfigFactory
 
@@ -13,6 +10,7 @@ images/
 labels/
 """
 
+# NOT WORKING: setup.py not running on execute_remotely, hence can not import enigmaai package
 # get project configurations
 # project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 # project_name = project.get('project-name')
@@ -31,6 +29,8 @@ task.connect(params)
 task.execute_remotely(queue_name="default")
 
 dataset_url = params['dataset_url']
+
+# validate task input params
 if not dataset_url:
     task.mark_completed(status_message="No dataset URL provided. Nothing to upload.")
     exit(0)
