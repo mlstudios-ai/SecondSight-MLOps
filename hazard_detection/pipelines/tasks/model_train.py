@@ -41,11 +41,11 @@ task = Task.init(project_name=project_name,
                 task_type=Task.TaskTypes.training)
 
 params = {
-    'dataset_id': '',                       # specific version of the dataset
+    'dataset_id': '',                # specific version of the dataset
     'dataset_name': '',              # latest registered dataset
-    'model_id': '',                         # specific version of the model 
+    'model_id': '',                  # specific version of the model 
     'model_variant': '',             # base model variant from ultralytics if no model given
-    'hyperparameters':  {}                  # dictionary of hyperparameters for training
+    'model_hyps':  {}                # dictionary of hyperparameters for training
 }
 
 # logger = task.get_logger()
@@ -57,7 +57,7 @@ dataset_name = params['dataset_name']
 model_id = params['model_id']
 model_variant = params["model_variant"]
 model_name = model_variant
-hyperparameters = params["hyperparameters"]
+model_hyps = params["model_hyps"]
 
 # validate task input params
 if not dataset_id and not dataset_name:
@@ -68,8 +68,8 @@ if not dataset_id and not dataset_name:
 if not model_variant:
     raise ValueError("Missing model variant. Please provide model_variant.")
 
-if not hyperparameters:
-    raise ValueError("Missing hyperparameters. Please provide hyperparameters for YOLO.train().")
+if not model_hyps:
+    raise ValueError("Missing hyperparameters. Please provide model_hyps for YOLO.train().")
 
 """
 Prepare dataset.
@@ -109,9 +109,9 @@ device_name = "cpu"
 if torch.cuda.is_available():
     device_name = "cuda"
     print(f"CUDA is available on device: {torch.cuda.get_device_name(0)}")
-elif torch.backends.mps.is_available():
+elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
     device_name = "mps"
-    print("MPS is available (Apple Silicon GPU)")
+    print("MPS is available (Apple Silicon GPU) with this version of PyTorch")
 else:
     print("No GPU available. Using CPU instead.")
 
@@ -122,7 +122,7 @@ if model_id:        # get the specific model
     server_model = Model(model_id=model_id)    
     input_model_path = server_model.get_local_copy(raise_on_error=True)
     print(f"Downloaded model name: {server_model.name} id:{server_model.id} to: {input_model_path}")
-elif model_name:    # get the latest from Model Registry
+elif model_name:    # get the latest from Model Registry, if not found, use default ultralytics base model
     server_models = Model.query_models(project_name=project_name, model_name=model_name, only_published=True)
     if server_models:
         server_model = server_models[0]
@@ -132,7 +132,7 @@ elif model_name:    # get the latest from Model Registry
         print (f"No registered model found with name '{model_name}'. Using {model_variant} base model from Ultralytics.")
 
 # training input params: hyp + other data
-train_args = hyperparameters.copy() # copy to prevent altering original by reference
+train_args = model_hyps.copy() # copy to prevent altering original by reference
 train_args["data"] = str(data_yaml_path)
 train_args["name"] = model_variant
 train_args["device"] = device_name
@@ -147,7 +147,7 @@ print(f"Training {model_variant} model using {device_name}.")
 results = model.train(**train_args)
 
 # upload results reference for report analysis 
-task.upload_artifact(name=f"{model_variant}_hyp_config", artifact_object=hyperparameters)
+task.upload_artifact(name=f"{model_variant}_hyp_config", artifact_object=model_hyps)
 result_file = working_dir / model_variant / "results.csv"
 task.upload_artifact(name="results", artifact_object=result_file)
 task.flush() 
