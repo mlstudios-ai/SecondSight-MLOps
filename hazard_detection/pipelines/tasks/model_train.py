@@ -1,11 +1,17 @@
+import os
+from sys import platform
 from clearml import Task, Dataset, Model
 from pathlib import Path
 import yaml
-import os
 import shutil
 import tempfile
-import torch
 from ultralytics import YOLO
+
+if  platform == "darwin": # MacOSX MPS platform dependencies for torchvision
+    print("Detected MacOSX platform.")
+    os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
+# import torch
 # from enigmaai.config import Project, Config, ConfigFactory
 
 """
@@ -28,24 +34,26 @@ there is a new version to prevent repeat downloads, especially with a large data
 NOTE: this is for training only, model evaluation task with compare and register the best model for deployment.
 """
 
+# TODO: detect mac os and add task requirements.
+
 # NOT WORKING: setup.py not running on execute_remotely, hence can not import enigmaai package
 # get project configurations
 # project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 # project_name = project.get('project-name')
 project_name="Detection"
-Task.add_requirements('numpy', '==1.26.4')
-# Task.add_requirements('pytorch', '')
+
+Task.add_requirements("numpy", "1.26.4")
 
 task = Task.init(project_name=project_name, 
                 task_name="Model Training", 
                 task_type=Task.TaskTypes.training)
 
 params = {
-    'dataset_id': '',                # specific version of the dataset
-    'dataset_name': '',              # latest registered dataset
-    'model_id': '',                  # specific version of the model 
-    'model_variant': '',             # base model variant from ultralytics if no model given
-    'model_hyps':  {}                # dictionary of hyperparameters for training
+    'dataset_id': '',               # specific version of the dataset
+    'dataset_name': '',             # latest registered dataset
+    'model_id': '',                 # specific version of the model 
+    'model_variant': '',            # base model variant from ultralytics if no model given
+    'model_hyps': ''                # string format of dictionary of hyperparameters for training
 }
 
 # logger = task.get_logger()
@@ -57,8 +65,16 @@ dataset_name = params['dataset_name']
 model_id = params['model_id']
 model_variant = params["model_variant"]
 model_name = model_variant
-model_hyps = params["model_hyps"]
+model_hyps_str = params["model_hyps"]
 
+
+# # for testing ONLY
+# hyp_config_file = f"{model_variant}_hyp_config.yaml"
+# hyp_config_path = Path(__file__).parent.parent / hyp_config_file
+# print("hyp_config_path=", hyp_config_path.resolve())
+# with open(hyp_config_path, "r") as file:
+#     model_hyps_str = yaml.dump(yaml.safe_load(file))
+        
 # validate task input params
 if not dataset_id and not dataset_name:
     task.mark_completed(status_message="No dataset provided. Nothing to train on.")
@@ -68,8 +84,10 @@ if not dataset_id and not dataset_name:
 if not model_variant:
     raise ValueError("Missing model variant. Please provide model_variant.")
 
-if not model_hyps:
+if not model_hyps_str:
     raise ValueError("Missing hyperparameters. Please provide model_hyps for YOLO.train().")
+
+model_hyps = yaml.safe_load(model_hyps_str)
 
 """
 Prepare dataset.
@@ -105,15 +123,15 @@ with open(data_yaml_path, 'w') as f:
 print("YAML file created at: ", data_yaml_path)
 
 # device check and selection
-device_name = "cpu"
-if torch.cuda.is_available():
-    device_name = "cuda"
-    print(f"CUDA is available on device: {torch.cuda.get_device_name(0)}")
-elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
-    device_name = "mps"
-    print("MPS is available (Apple Silicon GPU) with this version of PyTorch")
-else:
-    print("No GPU available. Using CPU instead.")
+device_name = "mps"
+# if torch.cuda.is_available():
+#     device_name = "cuda"
+#     print(f"CUDA is available on device: {torch.cuda.get_device_name(0)}")
+# elif torch.backends.mps.is_available(): #and torch.backends.mps.is_built():
+#     device_name = "mps"
+#     print("MPS is available (Apple Silicon GPU) with this version of PyTorch")
+# else:
+#     print("No GPU available. Using CPU instead.")
 
 # select input model
 # default download from repo if model_id or model_name is not provided
@@ -144,6 +162,17 @@ print(f"Loading {model_variant} model from {input_model_path}")
 model = YOLO(input_model_path)
 
 print(f"Training {model_variant} model using {device_name}.")
+
+# # TESTING
+# test_args = {'epochs': 2, 
+#              'data': str(data_yaml_path),
+#              'name': model_variant,
+#              'device': device_name,
+#              'project': str(working_dir),
+#              }
+
+# results = model.train(**test_args)
+
 results = model.train(**train_args)
 
 # upload results reference for report analysis 
