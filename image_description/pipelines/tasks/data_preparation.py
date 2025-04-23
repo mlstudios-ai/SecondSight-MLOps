@@ -72,11 +72,17 @@ extract_path = Path(extract_path)
 # get image file prefix that has corresponding labels
 images_dir = extract_path / "images"
 labels_dir = extract_path / "labels"
-# base destination path for prepared dataset
-dest_path = Path(extract_path / project_name/ "Desc_Dataset/desc_prep_dataset.json")
-if os.path.exists(dest_path): 
-        shutil.rmtree(dest_path) # remove old data      
-os.makedirs(dest_path)
+
+# build a Path to the JSON file under a subfolder "Desc_Dataset"
+out_dir  = extract_path / project_name / "Desc_Dataset"
+out_file = out_dir / "desc_prep_dataset.json"
+# ensure the output directory exists
+out_dir.mkdir(parents=True, exist_ok=True)
+
+# if an old JSON exists, delete it
+if out_file.exists():
+    logging.info(f"Removing old mapping at {out_file}")
+    out_file.unlink()
 
 
 def parse_label_file(label_file_path: str) -> Optional[List[Dict[str, Any]]]:
@@ -135,37 +141,32 @@ def create_mapping(images_dir: str, labels_dir: str, output_file: str) -> None:
         output_file (str): Path to the output JSON file.
     """
     mapping = {}
-    image_extensions = (".jpg", ".jpeg", ".png")
-
     # Iterate over image files.
-    for filename in os.listdir(images_dir):
-        if filename.lower().endswith(image_extensions):
-            base_name, _ = os.path.splitext(filename)
-            label_file_path = os.path.join(labels_dir, base_name + ".txt")
-            if os.path.exists(label_file_path):
-                annotations = parse_label_file(label_file_path)
-                if annotations is not None:
-                    mapping[filename] = annotations
+    for img in images_dir.iterdir():
+        if img.suffix.lower() in {".jpg", ".jpeg", ".png"}:
+            lbl = labels_dir / (img.stem + ".txt")
+            if lbl:
+                anns = parse_label_file(str(lbl))
+                if anns is not None:
+                    mapping[img.name] = anns
                 else:
-                    logging.warning(f"Annotation parsing failed for {label_file_path}")
+                    logging.warning(f"Annotation parsing failed for {lbl}")
             else:
-                logging.warning(f"No label file found for image: {filename} in {labels_dir}")
-
+                logging.warning(f"No label file found for image: {img.name} in {labels_dir}")
     # Save the mapping as a JSON file.
     try:
-        with open(output_file, "w") as f:
+        with output_file.open("w") as f:
             json.dump(mapping, f, indent=4)
         logging.info(f"Image-label mapping saved successfully to {output_file}")
     except Exception as e:
-        logging.error(f"Error writing JSON mapping to {output_file}: {e}")
+        logging.error(f"Error writing JSON mapping to {output_file}: {e}") 
 
-
+create_mapping(images_dir, labels_dir, out_file)
 # upload prepared dataset to ClearML server
 dataset = Dataset.create(
     dataset_project=project_name, dataset_name="Desc_Dataset"
 )
-dataset.add_files(path=dest_path)
-
+dataset.add_files(path=str(out_file))
 print('Uploading dataset in the background')
 dataset.upload()
 dataset.finalize()
