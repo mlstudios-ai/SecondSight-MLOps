@@ -1,5 +1,5 @@
 """
-This script generates pseudo captions for a dataset using a teacher model (e.g., BLIP‑2)
+This script generates pseudo captions for a dataset using a teacher model (e.g., Llava v1.5)
 as part of a knowledge distillation pipeline. It leverages object detection annotations
 from a JSON file and a predefined class mapping to build descriptive prompts.
 
