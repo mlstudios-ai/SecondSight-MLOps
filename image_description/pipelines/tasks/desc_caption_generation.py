@@ -50,7 +50,12 @@ logging.info(f"Images downloaded to: {images_dir}")
 
 # Initiate the task 2 to generate mapping of image name and reference description for student model to learn later in the pipeline
 task = Task.init(project_name=project_name, 
-                task_name="step2_desc_caption_generation")
+                task_name="step2_desc_caption_generation",
+                repo="https://kay2328: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@github.com/kay2328/EnigmaAI.git",
+                branch="dev",
+                script="image_description/pipelines/tasks/desc_caption_generation.py",
+                working_directory=".",
+                add_task_init_call=False)
 params = {
     'dataset_id': '',                # specific version of the dataset
     'dataset_name': 'Desc_Dataset'               # latest registered dataset
