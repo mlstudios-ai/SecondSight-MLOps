@@ -1,5 +1,5 @@
 scikit-learn
 numpy==1.26.4
 torch==2.5.1
-torchvision
+torchvision==0.20
 ultralytics
