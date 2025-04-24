@@ -1,11 +1,8 @@
 from clearml import Task, Dataset, Model
-import os
 import json
 import logging
 from typing import List, Optional, Dict, Any
 from pathlib import Path
-import shutil
-
 """
 Map the images from latest  dataset stored on ClearML server to their corresponding annotation/labels files.
 Each annotation file (stored in a separate labels folder) may contain one or more lines,
@@ -25,7 +22,6 @@ data.yaml
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 project_name="Description"
-
 task = Task.init(project_name=project_name, 
                 task_name="step1_desc_data_preparation")
 
@@ -45,29 +41,16 @@ dataset_name = params['dataset_name']
 if not dataset_id and not dataset_name:
     task.mark_completed(status_message="No dataset provided. Nothing to train on.")
     exit(0)
-    
-if dataset_id: 
-    # download the specific dataset from ClearML Server   
-    server_dataset = Dataset.get(dataset_id=dataset_id)
-    extract_path = server_dataset.get_local_copy()
-    print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
-elif dataset_name: 
-    # download the latest registered dataset
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project="Detection", only_completed=True)
-    extract_path = server_dataset.get_local_copy()          
-    print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
 
+if dataset_name: 
+    # download the latest registered dataset
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project="Detection", only_completed=True, alias="base_dataset")
+
+extract_path = server_dataset.get_local_copy()          
+print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
 """
 Prepare dataset.
 """
-if dataset_id:  # get specific dataset
-    server_dataset = Dataset.get(dataset_id=dataset_id)
-elif dataset_name: # get the latest registered dataset
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, only_completed=True)
-
-extract_path = server_dataset.get_local_copy()
-print(f"Downloaded dataset name: {server_dataset.name}, id:{server_dataset.id} to: {extract_path}")
-
 extract_path = Path(extract_path)
 # get image file prefix that has corresponding labels
 images_dir = extract_path / "images"
