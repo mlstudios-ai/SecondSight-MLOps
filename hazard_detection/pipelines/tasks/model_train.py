@@ -1,17 +1,16 @@
 import os
-from sys import platform
+# from sys import platform
+# if  platform == "darwin": # MacOSX MPS platform dependencies for torchvision
+#     print("Detected MacOSX platform.")
+#     os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+    
 from clearml import Task, Dataset, Model
 from pathlib import Path
 import yaml
 import shutil
 import tempfile
 from ultralytics import YOLO
-
-if  platform == "darwin": # MacOSX MPS platform dependencies for torchvision
-    print("Detected MacOSX platform.")
-    os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
-
-# import torch
+import torch
 # from enigmaai.config import Project, Config, ConfigFactory
 
 """
@@ -58,7 +57,7 @@ params = {
 
 # logger = task.get_logger()
 task.connect(params)
-# task.execute_remotely(queue_name="training")
+task.execute_remotely(queue_name="training")
 
 dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']
@@ -68,12 +67,15 @@ model_name = model_variant
 model_hyps_str = params["model_hyps"]
 
 
-# # for testing ONLY
-# hyp_config_file = f"{model_variant}_hyp_config.yaml"
-# hyp_config_path = Path(__file__).parent.parent / hyp_config_file
-# print("hyp_config_path=", hyp_config_path.resolve())
-# with open(hyp_config_path, "r") as file:
-#     model_hyps_str = yaml.dump(yaml.safe_load(file))
+# for testing ONLY
+dataset_name = "dataset"
+model_id = "6cd8d49e57a244aba4b9751128d7b783"
+model_variant = "yolo11n"
+hyp_config_file = f"{model_variant}_hyp_config.yaml"
+hyp_config_path = Path(__file__).parent.parent / hyp_config_file
+print("hyp_config_path=", hyp_config_path.resolve())
+with open(hyp_config_path, "r") as file:
+    model_hyps_str = yaml.dump(yaml.safe_load(file))
         
 # validate task input params
 if not dataset_id and not dataset_name:
@@ -124,14 +126,14 @@ print("YAML file created at: ", data_yaml_path)
 
 # device check and selection
 device_name = "mps"
-# if torch.cuda.is_available():
-#     device_name = "cuda"
-#     print(f"CUDA is available on device: {torch.cuda.get_device_name(0)}")
-# elif torch.backends.mps.is_available(): #and torch.backends.mps.is_built():
-#     device_name = "mps"
-#     print("MPS is available (Apple Silicon GPU) with this version of PyTorch")
-# else:
-#     print("No GPU available. Using CPU instead.")
+if torch.cuda.is_available():
+    device_name = "cuda"
+    print(f"CUDA is available on device: {torch.cuda.get_device_name(0)}")
+elif torch.backends.mps.is_available(): #and torch.backends.mps.is_built():
+    device_name = "mps"
+    print("MPS is available (Apple Silicon GPU) with this version of PyTorch")
+else:
+    print("No GPU available. Using CPU instead.")
 
 # select input model
 # default download from repo if model_id or model_name is not provided
@@ -182,13 +184,12 @@ task.upload_artifact(name="results", artifact_object=result_file)
 task.flush() 
 
 # output info
-output_model_id = task.models.output[-1].id
-output_model_name = task.models.output[-1].name
+output_model = task.models.output[0] # get the most recent model. there should be only 1
 task.set_parameter("output_model_project", project_name)
-task.set_parameter("output_model_id", output_model_id)
-task.set_parameter("output_model_name", output_model_name)
+task.set_parameter("output_model_id", output_model.id)
+task.set_parameter("output_model_name", output_model.name)
 task.set_parameter("output_model_variant", model_variant)
 
 # # shutil.rmtree(working_dir) # clean up output temp files
 
-task.mark_completed(status_message=f"Completed training {model_variant} output:{output_model_name} id:{output_model_id}")
+task.mark_completed(status_message=f"Completed training {model_variant} output:{output_model.name} id:{output_model.id}")
