@@ -39,6 +39,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 #get the image dataset from "Detection project- base_dataset"
 images_data = Dataset.get(
+    dataset_id="2231b5b121924ed684d6560cf6839619",
     dataset_name="base_dataset",
     dataset_project="Detection",
     only_completed=True,
@@ -50,7 +51,8 @@ logging.info(f"Images downloaded to: {images_dir}")
 
 # Initiate the task 2 to generate mapping of image name and reference description for student model to learn later in the pipeline
 task = Task.init(project_name=project_name, 
-                task_name="step2_desc_caption_generation")
+                task_name="step2_desc_caption_generation",
+                task_type=Task.TaskTypes.data_preparation)
 params = {
     'dataset_id': '',                # specific version of the dataset
     'dataset_name': 'Desc_Dataset'               # latest registered dataset
