@@ -171,7 +171,7 @@ def generate_caption_for_image(image_path: str, prompt: str, processor, model, d
             temperature=0.7,                           # ↑ Slight creativity
             top_p=0.9,                                 # ↑ Nucleus sampling
             repetition_penalty=1.1,                    # ↓ Less repetition
-            #do_sample=True,                            # ↑ Sampling over greedy
+            do_sample=True,                            # ↑ Sampling over greedy
             eos_token_id=processor.tokenizer.eos_token_id,
             pad_token_id=processor.tokenizer.pad_token_id
         )
