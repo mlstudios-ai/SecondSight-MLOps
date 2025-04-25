@@ -18,12 +18,12 @@ Train YOLOv11 model using the latest split dataset stored on ClearML server.
 THe dataset needs to be in the following structure:
 
 data.yaml
-train/images/
-train/labels/
-val/images/
-val/labels/
-test/images/
-test/labels/
+train/images/*.jpg
+train/labels/*.txt
+val/images/*.jpg
+val/labels/*.txt
+test/images/*.jpg
+test/labels/*.txt
 
 IMPORTANT: The dataset will be downloaded to a cached directory and will NOT be copied into 
 local_working_directory. This is to preserve the built-in caching mechanism of 
@@ -57,7 +57,7 @@ params = {
 
 # logger = task.get_logger()
 task.connect(params)
-task.execute_remotely(queue_name="training")
+# task.execute_remotely(queue_name="training")
 
 dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']
@@ -112,6 +112,7 @@ working_dir = Path(tempfile.mkdtemp()) / project_name
 working_dir.mkdir(parents=True, exist_ok=True)    
 print("Working temp directory at:", working_dir)
 
+# TODO: only modify root file path
 # contruct YAML config file
 data_yaml_path = working_dir / 'data.yaml'
 classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
@@ -165,15 +166,7 @@ model = YOLO(input_model_path)
 
 print(f"Training {model_variant} model using {device_name}.")
 
-# # TESTING
-# test_args = {'epochs': 2, 
-#              'data': str(data_yaml_path),
-#              'name': model_variant,
-#              'device': device_name,
-#              'project': str(working_dir),
-#              }
-
-# results = model.train(**test_args)
+train_args['epochs'] = 200 # TESTING
 
 results = model.train(**train_args)
 
