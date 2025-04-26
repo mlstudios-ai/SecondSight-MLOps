@@ -10,6 +10,7 @@ import shutil
 import tempfile
 import torch
 from ultralytics import YOLO
+from enigmaai import util
 from enigmaai.config import Project, Config, ConfigFactory
 
 """
@@ -40,12 +41,11 @@ task = Task.init(project_name=project_name,
                 task_type=Task.TaskTypes.testing)
 
 params = {
-    'test_dataset_id': '',                                  # specific dataset for testing
-    'test_dataset_name': 'test_dataset',                         # name of the dataset for testing
-    'draft_model_id': 'f359bbd5cbe148f18f69702ef50704e2',   # the unpublished model to evaluate 
-    'pub_model_name': 'yolo11n',                            # the published model name (also variant)
+    'test_dataset_id': '',          # specific dataset for testing
+    'test_dataset_name': '',        # name of the dataset for testing
+    'draft_model_id': '',           # the unpublished model to evaluate 
+    'pub_model_name': '',           # the published model name (also variant)
 }
-
 
 test_dataset_id = params['test_dataset_id']
 test_dataset_name = params["test_dataset_name"]
@@ -115,16 +115,7 @@ else:
         
     print("YAML file created at: ", data_yaml_path)
 
-    # device check and selection
-    device_name = "mps"
-    if torch.cuda.is_available():
-        device_name = "cuda"
-        print(f"CUDA is available on device: {torch.cuda.get_device_name(0)}")
-    elif torch.backends.mps.is_available(): #and torch.backends.mps.is_built():
-        device_name = "mps"
-        print("MPS is available (Apple Silicon GPU) with this version of PyTorch")
-    else:
-        print("No GPU available. Using CPU instead.")
+    device_name = util.get_device_name()
         
     # evaluate the draft model    
     draft_model_path = draft_model.get_local_copy(raise_on_error=True)
@@ -165,7 +156,7 @@ print("best_model_variant:", best_model.name)
 
 # task output info
 task.set_parameter("best_model_project", project_name)
-task.set_parameter("bets_model_id", best_model.id)
+task.set_parameter("best_model_id", best_model.id)
 task.set_parameter("best_model_name", best_model.name)
 task.set_parameter("best_model_variant", best_model.name)
 

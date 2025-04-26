@@ -9,6 +9,7 @@ import shutil
 import tempfile
 from ultralytics import YOLO
 import torch
+from enigmaai import util
 from enigmaai.config import Project, Config, ConfigFactory
 
 """
@@ -108,16 +109,7 @@ with open(data_yaml_path, 'w') as f:
     
 print("YAML file created at: ", data_yaml_path)
 
-# device check and selection
-device_name = "mps"
-if torch.cuda.is_available():
-    device_name = "cuda"
-    print(f"CUDA is available on device: {torch.cuda.get_device_name(0)}")
-elif torch.backends.mps.is_available(): #and torch.backends.mps.is_built():
-    device_name = "mps"
-    print("MPS is available (Apple Silicon GPU) with this version of PyTorch")
-else:
-    print("No GPU available. Using CPU instead.")
+device_name = util.get_device_name()
 
 # default download from repo
 input_model_path = project.get("base-model-url").format(model_variant)

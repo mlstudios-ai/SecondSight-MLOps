@@ -87,12 +87,12 @@ if base_dataset_id:
     # download the specific dataset from ClearML Server   
     server_dataset = Dataset.get(dataset_id=base_dataset_id)
     extract_path = server_dataset.get_local_copy()
-    print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
+    print(f"Downloaded dataset name:{server_dataset.name} id:{server_dataset.id} to: {extract_path}")
 elif base_dataset_name: 
     # download the latest registered dataset
     server_dataset = Dataset.get(dataset_name=base_dataset_name, dataset_project=project_name, only_completed=True)
     extract_path = server_dataset.get_local_copy()          
-    print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
+    print(f"Downloaded dataset name:{server_dataset.name} id:{server_dataset.id} to: {extract_path}")
 elif base_dataset_url: 
     # download from remote URL
     extract_path = StorageManager.get_local_copy(remote_url=base_dataset_url,
@@ -124,7 +124,6 @@ random_state = int(params['random_state'])
 train_stems, val_stems = train_test_split(clean_file_stems, 
                                          test_size = val_size + test_size, 
                                          random_state=random_state)
-
 
 if test_size > 0:
     val_stems, test_stems = train_test_split(val_stems, 
