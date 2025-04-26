@@ -6,29 +6,32 @@ from clearml import Task, Dataset, StorageManager
 from enigmaai.config import Project, Config, ConfigFactory
 
 """
-Upload zipped YOLO dataset file from remote URL, extract and upload to ClearML server. 
+Upload zipped YOLO test dataset file from remote URL, extract and upload to ClearML server. 
 The zipped file needs to contain the YAML file and assets in the following structure:
 
-data.yaml
 images/
 labels/
+
+This dataset is used for evaluate best model in the Model Evaluation task.
 """
 
+# get project configurations
 project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 project_name = project.get('project-name')
 
 task = Task.init(project_name=project_name, 
-                task_name="Upload Base Dataset", 
-                task_type=Task.TaskTypes.data_processing)
+                task_name="Upload Evaluation Dataset", 
+                task_type=Task.TaskTypes.data_processing,
+                reuse_last_task_id=True)
 
 params = {
-    'dataset_url': ''
+    'dataset_url': ''    
 }
 
 task.connect(params)
 task.execute_remotely(queue_name="default")
 
-dataset_name = "base_dataset"
+dataset_name = "test_dataset"
 dataset_url = params['dataset_url']
 
 # validate task input params
@@ -55,7 +58,7 @@ dataset = Dataset.create(
 
 dataset.add_files(path=dataset_path)
 
-print('Uploading base dataset in the background')
+print('Uploading test dataset in the background')
 
 dataset.upload()
 dataset.finalize()

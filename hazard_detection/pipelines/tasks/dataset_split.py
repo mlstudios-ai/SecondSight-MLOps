@@ -71,35 +71,37 @@ params = {
 task.connect(params)
 task.execute_remotely(queue_name="default")
 
+dataset_name = "dataset" # name for uploading the output dataset
+
 # download dataset 
-dataset_id = params['base_dataset_id']
-dataset_name = params['base_dataset_name']
-dataset_url = params['base_dataset_url']
+base_dataset_id = params['base_dataset_id']
+base_dataset_name = params['base_dataset_name']
+base_dataset_url = params['base_dataset_url']
 
 # validate task input params
-if not dataset_id and not dataset_name and not dataset_url:
+if not base_dataset_id and not base_dataset_name and not base_dataset_url:
     task.mark_completed(status_message="No dataset provided. Nothing to process.")
     exit(0)
 
-if dataset_id: 
+if base_dataset_id: 
     # download the specific dataset from ClearML Server   
-    server_dataset = Dataset.get(dataset_id=dataset_id)
+    server_dataset = Dataset.get(dataset_id=base_dataset_id)
     extract_path = server_dataset.get_local_copy()
     print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
-elif dataset_name: 
+elif base_dataset_name: 
     # download the latest registered dataset
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, only_completed=True)
+    server_dataset = Dataset.get(dataset_name=base_dataset_name, dataset_project=project_name, only_completed=True)
     extract_path = server_dataset.get_local_copy()          
     print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
-elif dataset_url: 
+elif base_dataset_url: 
     # download from remote URL
-    extract_path = StorageManager.get_local_copy(remote_url=dataset_url,
+    extract_path = StorageManager.get_local_copy(remote_url=base_dataset_url,
                                                  name="base_dataset",
                                                  cache_context="hd",
                                                  force_download=True)    
     if extract_path is None:
-        raise FileNotFoundError("404", f"Found not found at URL {dataset_url}")    
-    print(f"Downloaded dataset from:{dataset_url} to: {extract_path}") 
+        raise FileNotFoundError("404", f"Found not found at URL {base_dataset_url}")    
+    print(f"Downloaded dataset from:{base_dataset_url} to: {extract_path}") 
 else: # link not provided
      raise ValueError("Missing param dataset_url")
 
@@ -134,7 +136,7 @@ Move files to train, val, test folders
 """
 
 # base destination path for split dataset
-dest_path = Path(extract_path / "dataset")
+dest_path = Path(extract_path / dataset_name)
 if os.path.exists(dest_path): 
         shutil.rmtree(dest_path) # remove old data
         
@@ -191,7 +193,7 @@ with open(data_yaml_path, 'w') as f:
 
 # upload dataset to ClearML server
 dataset = Dataset.create(
-    dataset_project=project_name, dataset_name="dataset"
+    dataset_project=project_name, dataset_name=dataset_name
 )
 
 dataset.add_files(path=dest_path)
