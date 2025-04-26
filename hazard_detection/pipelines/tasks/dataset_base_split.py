@@ -121,15 +121,17 @@ test_size = float(params['test_size'])
 random_state = int(params['random_state'])
 
 # split train, val, test sets according task params
-train_stems, remaining_stems = train_test_split(clean_file_stems, 
+train_stems, val_stems = train_test_split(clean_file_stems, 
                                          test_size = val_size + test_size, 
                                          random_state=random_state)
 
-# if test size is 0 then no need to calculate division of percentages
-test_size = test_size if test_size == 0 else test_size/(val_size + test_size)
-val_stems, test_stems = train_test_split(remaining_stems, 
-                                         test_size=test_size, 
-                                         random_state=random_state) 
+
+if test_size > 0:
+    val_stems, test_stems = train_test_split(val_stems, 
+                                            test_size=test_size, 
+                                            random_state=random_state) 
+else:
+    test_stems = []
 
 """
 Move files to train, val, test folders
