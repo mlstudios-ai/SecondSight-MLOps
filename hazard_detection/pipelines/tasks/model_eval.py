@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
+
 from clearml import Task, Dataset, Model
 from pathlib import Path
 import yaml
@@ -6,7 +10,7 @@ import shutil
 import tempfile
 import torch
 from ultralytics import YOLO
-# from enigmaai.config import Project, Config, ConfigFactory
+from enigmaai.config import Project, Config, ConfigFactory
 
 """
 Constraints and requirements from the Business and data understanding phase will shape this phase. 
@@ -27,13 +31,9 @@ Here we test the recall on a common test dataset. The model complexity, interpre
 as the model is very small and straght forward. 
 """
 
-# NOT WORKING: setup.py not running on execute_remotely, hence can not import enigmaai package
 # get project configurations
-# project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
-# project_name = project.get('project-name')
-project_name="Detection"
-Task.add_requirements('numpy', '==1.26.4')
-# Task.add_requirements('pytorch', '')
+project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
+project_name = project.get('project-name')
 
 task = Task.init(project_name=project_name, 
                 task_name="Model Evaluation", 
@@ -41,8 +41,8 @@ task = Task.init(project_name=project_name,
 
 params = {
     'test_dataset_id': '',                                  # specific dataset for testing
-    'test_dataset_name': 'dataset',                         # name of the dataset for testing
-    'draft_model_id': '84f8618ada9c42fe822a66d01b63a1a4',   # the unpublished model to evaluate 
+    'test_dataset_name': 'test_dataset',                         # name of the dataset for testing
+    'draft_model_id': 'f359bbd5cbe148f18f69702ef50704e2',   # the unpublished model to evaluate 
     'pub_model_name': 'yolo11n',                            # the published model name (also variant)
 }
 
@@ -82,9 +82,8 @@ if not server_models:
     print(f"No published model found, use draft as the best model name:{draft_model.name} id:{draft_model.id}")
 else:    
     # best published model found
-    published_model = server_models[0] #get the most recent one
-    pub_model = published_model
-    print(f"Found published model name:{published_model.name} id:{published_model.id}")  
+    pub_model = server_models[0] # get the most recent one
+    print(f"Found published model name:{pub_model.name} id:{pub_model.id}")  
 
     """
     Compare the model performance using a common dataset.
@@ -93,9 +92,9 @@ else:
         
     # load dataset
     if test_dataset_id:  # get specific dataset
-        server_dataset = Dataset.get(dataset_id=test_dataset_id, alias=pub_model_name)
+        server_dataset = Dataset.get(dataset_id=test_dataset_id, alias="test")
     elif test_dataset_name: # get the latest registered dataset
-        server_dataset = Dataset.get(dataset_name=test_dataset_name, dataset_project=project_name, only_completed=True,  alias=pub_model_name)
+        server_dataset = Dataset.get(dataset_name=test_dataset_name, dataset_project=project_name, only_completed=True,  alias="test")
 
     dataset_path = server_dataset.get_local_copy()
 
@@ -109,9 +108,9 @@ else:
     data_yaml_path = working_dir / 'data.yaml'
     classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
     with open(data_yaml_path, 'w') as f: 
-        f.write(f"train: {dataset_path}images\n")   # Not used
-        f.write(f"val: {dataset_path}images\n")     # Not used
-        f.write(f"test: {dataset_path}images\n")    # Used
+        f.write(f"train: {dataset_path}/images\n")   # Not used
+        f.write(f"val: {dataset_path}/images\n")     # Not used
+        f.write(f"test: {dataset_path}/images\n")    # Used
         f.write(f"nc: {len(classes)}\n")
         f.write(f"names: {classes}\n")
         
@@ -150,14 +149,14 @@ else:
     print("pub_metrics=", pub_metrics.mean_results(), " recall=", pub_recall)
 
     # compare and select the best model
-    best_model = pub_yolo_model if pub_recall > pub_yolo_model else draft_recall
+    best_model = pub_model if pub_recall > draft_recall else draft_model
     
 # publish the best model
-if best_model != pub_model: # publish new model
+if best_model.id != pub_model.id: # publish new model
     best_model.publish()
     print(f"Published new model name:{best_model.name} id:{best_model.id}")
 else: # new model not better, nothing to publish
-    print(f"Published model name:{best_model.name} id:{best_model.id} is already the best, nothing to publish.")
+    print(f"Existing model name:{best_model.name} id:{best_model.id} is already the best, nothing to publish.")
 
 # show output    
 print("best_model_project:", project_name)
