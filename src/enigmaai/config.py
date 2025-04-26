@@ -4,8 +4,8 @@ from enum import Enum
 
 # current projects. 
 class Project(Enum):
-    HAZARD_DETECTION = "hazard_detection/config.yaml"
-    SCENE_DESCRIPTION = "image_description/config.yaml"
+    HAZARD_DETECTION = "hazard_detection/project_config.yaml"
+    SCENE_DESCRIPTION = "image_description/project_config.yaml"
     
 class Config:
     """
