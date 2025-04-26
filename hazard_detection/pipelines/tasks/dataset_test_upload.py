@@ -9,6 +9,7 @@ from enigmaai.config import Project, Config, ConfigFactory
 Upload zipped YOLO test dataset file from remote URL, extract and upload to ClearML server. 
 The zipped file needs to contain the YAML file and assets in the following structure:
 
+data.yaml
 images/
 labels/
 
