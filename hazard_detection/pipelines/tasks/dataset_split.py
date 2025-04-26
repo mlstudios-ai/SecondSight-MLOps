@@ -1,10 +1,12 @@
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
+
 import shutil
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from clearml import Task, Dataset, StorageManager
-# from enigmaai.config import Project, Config, ConfigFactory
-# project package does not load on remote worker
+from enigmaai.config import Project, Config, ConfigFactory
 
 def clean_dataset_file_stems(images_path, labels_path):
     """
@@ -39,19 +41,18 @@ def clean_dataset_file_stems(images_path, labels_path):
     return list(image_stems)
     
 """
-Split dataset downloaded from ClearML server or remote URL ZIP file according
-to task parameter values. The dataset should be in the following structure:
+Split dataset into train, val, test. Base dataset can be downloaded from ClearML server 
+or remote URL ZIP file according to task parameter values. 
+
+The dataset should be in the following structure:
 
 data.yaml
 images/
 labels/
 """
 
-# NOT WORKING: setup.py not running on execute_remotely, hence can not import enigmaai package
-# get project configurations
-# project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
-# project_name = project.get('project-name')
-project_name="Detection"
+project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
+project_name = project.get('project-name')
 
 task = Task.init(project_name=project_name, 
                 task_name="Split Dataset", 
@@ -62,8 +63,8 @@ params = {
     'base_dataset_name': '',
     'base_dataset_url': '',
     'random_state': 42,
-    'val_size': 0.15,
-    'test_size': 0.15,
+    'val_size': 0.3,
+    'test_size': 0.0,
 }
 
 # logger = task.get_logger()
@@ -113,17 +114,19 @@ clean_file_stems = clean_dataset_file_stems(extract_path / "images", extract_pat
 print("clean_file_stems:", len(clean_file_stems))
 
 # split sizes
-val_size = params['val_size']
-test_size = params['test_size']
-random_state = params['random_state']
+val_size = float(params['val_size'])
+test_size = float(params['test_size'])
+random_state = int(params['random_state'])
 
 # split train, val, test sets according task params
 train_stems, remaining_stems = train_test_split(clean_file_stems, 
                                          test_size = val_size + test_size, 
                                          random_state=random_state)
 
+# if test size is 0 then no need to calculate division of percentages
+test_size = test_size if test_size == 0 else test_size/(val_size + test_size)
 val_stems, test_stems = train_test_split(remaining_stems, 
-                                         test_size=test_size/(val_size + test_size), 
+                                         test_size=test_size, 
                                          random_state=random_state) 
 
 """
@@ -197,6 +200,11 @@ print('Uploading dataset in the background')
 
 dataset.upload()
 dataset.finalize()
+
+print('Done')
+print("output_dataset_project", dataset.project)
+print("output_dataset_id", dataset.id)
+print("output_dataset_name", dataset.name)
 
 task.set_parameter("output_dataset_project", dataset.project)
 task.set_parameter("output_dataset_id", dataset.id)
