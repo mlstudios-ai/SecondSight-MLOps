@@ -81,7 +81,8 @@ Prepare dataset.
 if dataset_id:  # get specific dataset
     server_dataset = Dataset.get(dataset_id=dataset_id, alias=model_variant)
 elif dataset_name: # get the latest registered dataset
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, only_completed=True,  alias=model_variant)
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, 
+                                 only_completed=True,  alias=model_variant)
 
 extract_path = server_dataset.get_local_copy()
 print(f"Downloaded dataset name: {server_dataset.name} id:{server_dataset.id} to: {extract_path}")
@@ -90,7 +91,7 @@ print(f"Downloaded dataset name: {server_dataset.name} id:{server_dataset.id} to
 Model training.
 """
 
-# use temp director for output
+# use temp directory for output
 working_dir = Path(tempfile.mkdtemp()) / project_name
 working_dir.mkdir(parents=True, exist_ok=True)    
 print("Working temp directory at:", working_dir)

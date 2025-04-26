@@ -103,7 +103,6 @@ else:
     working_dir.mkdir(parents=True, exist_ok=True)    
     print("Working temp directory at:", working_dir)
 
-    # TODO: only modify root file path
     # contruct YAML config file
     data_yaml_path = working_dir / 'data.yaml'
     classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
