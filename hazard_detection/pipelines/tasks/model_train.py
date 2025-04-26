@@ -68,6 +68,7 @@ if not dataset_id and not dataset_name:
 if not model_variant:
     raise ValueError("Missing model variant. Please provide model_variant.")
 
+# Mandatory input param
 if not model_hyps_str:
     raise ValueError("Missing hyperparameters. Please provide model_hyps for YOLO.train().")
 
@@ -117,9 +118,10 @@ elif torch.backends.mps.is_available(): #and torch.backends.mps.is_built():
 else:
     print("No GPU available. Using CPU instead.")
 
+# default download from repo
+input_model_path = project.get("base-model-url").format(model_variant)
+
 # select input model
-# default download from repo if model_id or model_name is not provided
-input_model_path = f"https://github.com/ultralytics/assets/releases/download/v8.3.0/{model_variant}.pt"
 if model_id:        # get the specific model
     server_model = Model(model_id=model_id)    
     input_model_path = server_model.get_local_copy(raise_on_error=True)
