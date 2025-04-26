@@ -1,8 +1,6 @@
+import sys
 import os
-# from sys import platform
-# if  platform == "darwin": # MacOSX MPS platform dependencies for torchvision
-#     print("Detected MacOSX platform.")
-#     os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
     
 from clearml import Task, Dataset, Model
 from pathlib import Path
@@ -11,35 +9,33 @@ import shutil
 import tempfile
 from ultralytics import YOLO
 import torch
-# from enigmaai.config import Project, Config, ConfigFactory
+from enigmaai.config import Project, Config, ConfigFactory
 
 """
 Train YOLOv11 model using the latest split dataset stored on ClearML server.
-THe dataset needs to be in the following structure:
+The dataset needs to be in the following structure:
 
 data.yaml
 train/images/*.jpg
 train/labels/*.txt
 val/images/*.jpg
 val/labels/*.txt
-test/images/*.jpg
-test/labels/*.txt
+test/images/
+test/labels/
 
-IMPORTANT: The dataset will be downloaded to a cached directory and will NOT be copied into 
+NOTE: The dataset will be downloaded to a cached directory and will NOT be copied into 
 local_working_directory. This is to preserve the built-in caching mechanism of 
 Dataset.get_local_copy(). Caching keep tracks of changes in datdaset and only download if 
 there is a new version to prevent repeat downloads, especially with a large dataset.
 
-NOTE: this is for training only, model evaluation task with compare and register the best model for deployment.
+NOTE: this is for training only and will only use train and val dataset. A sepearate 
+test dataset on the server will be used for model evaluation task to compare and register 
+the best model for deployment.
 """
 
-# TODO: detect mac os and add task requirements.
-
-# NOT WORKING: setup.py not running on execute_remotely, hence can not import enigmaai package
 # get project configurations
-# project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
-# project_name = project.get('project-name')
-project_name="Detection"
+project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
+project_name = project.get('project-name')
 
 Task.add_requirements("numpy", "1.26.4")
 
@@ -52,7 +48,7 @@ params = {
     'dataset_name': '',             # latest registered dataset
     'model_id': '',                 # specific version of the model 
     'model_variant': '',            # base model variant from ultralytics if no model given
-    'model_hyps': ''                # string format of dictionary of hyperparameters for training
+    'model_hyps': ''                # string format of dictionary of hyperparameters for YOLO.train()
 }
 
 # logger = task.get_logger()
@@ -166,7 +162,7 @@ model = YOLO(input_model_path)
 
 print(f"Training {model_variant} model using {device_name}.")
 
-train_args['epochs'] = 200 # TESTING
+# train_args['epochs'] = 200 # TESTING
 
 results = model.train(**train_args)
 
