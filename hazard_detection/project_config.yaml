@@ -1,0 +1,23 @@
+# ---------------------------
+# Please use this file to configure variables for different environments
+# such as dev, staging, prod etc
+# ---------------------------
+
+# name of the project for all ClearML artifacts
+# can be changed to create new project environment.
+# Use alpha numeric names without spaces.
+# e.g for production, use the name "Detection_Prod"
+project-name: "Detection"
+
+# set the following initial dataset for detection pipeline
+# the value will take priorities in its order. ie, if base-dataset-url is
+# provided, it will take this as the initial dataset and ignore the rest
+# if not is set, pipeline will mark this step as complete and continue
+base-dataset-url: "https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/dev_dataset.zip"
+base-dataset-id: "860b1a8d7f954119806d2c5a92f2e0d9"
+base-dataset-name: "base_dataset"
+
+# if base dataset is not set, use the split version and start from training
+# if not is set, pipeline will mark this step as complete and continue
+split-dataset-id: "f7ef54810a544aa0b2377cdf27f8c600"
+split-dataset-name: "dataset"
