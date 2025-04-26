@@ -12,7 +12,7 @@ import torch
 from enigmaai.config import Project, Config, ConfigFactory
 
 """
-Train YOLOv11 model using the latest split dataset stored on ClearML server.
+Train YOLOv11 model using the split dataset stored on ClearML server.
 The dataset needs to be in the following structure:
 
 data.yaml
@@ -37,8 +37,6 @@ the best model for deployment.
 project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 project_name = project.get('project-name')
 
-Task.add_requirements("numpy", "1.26.4")
-
 task = Task.init(project_name=project_name, 
                 task_name="Model Training", 
                 task_type=Task.TaskTypes.training)
@@ -51,7 +49,6 @@ params = {
     'model_hyps': ''                # string format of dictionary of hyperparameters for YOLO.train()
 }
 
-# logger = task.get_logger()
 task.connect(params)
 # task.execute_remotely(queue_name="training")
 
@@ -61,17 +58,6 @@ model_id = params['model_id']
 model_variant = params["model_variant"]
 model_name = model_variant
 model_hyps_str = params["model_hyps"]
-
-
-# for testing ONLY
-dataset_name = "dataset"
-model_id = "6cd8d49e57a244aba4b9751128d7b783"
-model_variant = "yolo11n"
-hyp_config_file = f"{model_variant}_hyp_config.yaml"
-hyp_config_path = Path(__file__).parent.parent / hyp_config_file
-print("hyp_config_path=", hyp_config_path.resolve())
-with open(hyp_config_path, "r") as file:
-    model_hyps_str = yaml.dump(yaml.safe_load(file))
         
 # validate task input params
 if not dataset_id and not dataset_name:
@@ -108,7 +94,6 @@ working_dir = Path(tempfile.mkdtemp()) / project_name
 working_dir.mkdir(parents=True, exist_ok=True)    
 print("Working temp directory at:", working_dir)
 
-# TODO: only modify root file path
 # contruct YAML config file
 data_yaml_path = working_dir / 'data.yaml'
 classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
@@ -157,13 +142,8 @@ train_args["project"] = str(working_dir)
 
 task.connect(train_args)
 
-print(f"Loading {model_variant} model from {input_model_path}")
-model = YOLO(input_model_path)
-
 print(f"Training {model_variant} model using {device_name}.")
-
-# train_args['epochs'] = 200 # TESTING
-
+model = YOLO(input_model_path)
 results = model.train(**train_args)
 
 # upload results reference for report analysis 
@@ -179,6 +159,6 @@ task.set_parameter("output_model_id", output_model.id)
 task.set_parameter("output_model_name", output_model.name)
 task.set_parameter("output_model_variant", model_variant)
 
-# # shutil.rmtree(working_dir) # clean up output temp files
+# shutil.rmtree(working_dir) # clean up output temp files
 
 task.mark_completed(status_message=f"Completed training {model_variant} output:{output_model.name} id:{output_model.id}")
