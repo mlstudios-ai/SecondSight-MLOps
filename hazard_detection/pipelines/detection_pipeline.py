@@ -42,7 +42,7 @@ def pre_upload_callback(pipeline, node, param_override) -> bool:
     # if no dataset url provided, there will be no output databset_id.
     # assign it to empty so the task can exit safely and allow the pipeline to continue
     if not param_override["General/dataset_url"]:
-        node.job.task.set_parameter("output_dataset_id", "")
+        node.set_parameter("output_dataset_id", "")
         print("No output_dataset_id, assigned to empty string")
     
     print("Cloning Task id={} with parameters: {}".format(
