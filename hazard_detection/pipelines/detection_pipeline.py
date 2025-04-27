@@ -30,7 +30,7 @@ allows to adjust to various cirsumstances for the users.
 # get project configurations
 project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 project_name = project.get('project-name')
-pipeline_name = "Train YOLOv11 Model"
+pipeline_name = "YOLOv11 Pipeline"
 
 # Connecting ClearML with the current pipeline, from here on everything is logged automatically
 pipe = PipelineController(name=pipeline_name, 
