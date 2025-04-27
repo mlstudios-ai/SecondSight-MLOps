@@ -13,7 +13,7 @@ YOLOv11 model end-to-end MLOps pipeline. The pipeline is designed to cater for f
 of different needs at each point of the pipeline. 
 
 Sometimes user may want to execute a task for specific purposes and then continue with the pipeline.
-Some steps can be skipped if the minimum parameters are not provided as specificed pipeline parameter 
+Some steps can be skipped if the minimum parameters are not provided as specified pipeline parameter 
 descriptions (refer to the corresponding tasks for more info).
 
 Pipeline parameter settings can be set in each new run for various purposes as follow:
@@ -21,10 +21,10 @@ Pipeline parameter settings can be set in each new run for various purposes as f
 1. End-to-end from downloading base dataset from remote URL to model publising.
 2. Skip step 1 URL download, use existing base datatset, and start from step 2: dataset processing
 3. Skip steps 1 & 2, use processed dataset and start from step 3: model training
-4. Skip steps 1, 2, & 3, use existing model as the new model for evaluatoin, starts from step 4: model evaluation
+4. Skip steps 1, 2, & 3, use existing model as the new model for evaluation, starts from step 4: model evaluation
 
 The above scenarios are designed to reduce execution time and resources requirements, reduce duplications, and 
-allows to adjust to various cirsumstances for the users.
+allows adjustment to various circumstances.
 """
 
 # get project configurations
