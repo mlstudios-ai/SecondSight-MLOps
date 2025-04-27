@@ -14,10 +14,11 @@ from enigmaai import util
 from enigmaai.config import Project, Config, ConfigFactory
 
 """
-For hazard detection, accident prevention is paramount. To detect an obstacle more important
-then the what type of object is the obstacle. Therefore, Recall performance metric will be 
-used to evaluate the model. The newly trained (in draft) is compared to the current live (published)
-model. If the Recall score is higher, the newly train model will be published for inferencing.
+For hazard detection, accident prevention is paramount. To detect an obstacle is more important
+than the what type of object is the obstacle. Therefore, Recall performance metric will be 
+used over accuracty to evaluate the model. The newly trained (in draft) is compared to the current 
+live (published) model. If the Recall score is higher, the newly train model will be published for 
+inferencing.
 
 Other metrics, both from model training (such as latency) and outside (such is resource demands), 
 are not considered at this stage. 
@@ -74,9 +75,7 @@ print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
 # fetch the published best model
 server_models = Model.query_models(project_name=project_name, model_name=pub_model_name, only_published=True)
 if not server_models:     
-    # best published model not found, use draft (first train) as best
-    # published draft model as first 
-    best_model = draft_model    
+    best_model = draft_model # best published model not found, use first draft as best
     print(f"No published model found, use draft as the best model name:{draft_model.name} id:{draft_model.id}")
 else:    
     # best published model found
