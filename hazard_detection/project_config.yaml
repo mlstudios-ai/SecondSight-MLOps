@@ -11,7 +11,7 @@ project-name: "Detection_Dev"     # (run from dev branch) For development
 # project-name: "Detection"         # (run from main branch) For production
 
 # Runs pipeline remotely. If false, all pipeline tasks runs on local machine
-# This should be set to true on production
+# This should be set to true on production and staging
 pipeline-remote-execution: false
 
 # The initial dataset download location
