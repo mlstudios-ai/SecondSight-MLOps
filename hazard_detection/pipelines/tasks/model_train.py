@@ -8,7 +8,6 @@ import yaml
 import shutil
 import tempfile
 from ultralytics import YOLO
-import torch
 from enigmaai import util
 from enigmaai.config import Project, Config, ConfigFactory
 
@@ -151,8 +150,9 @@ results = model.train(**train_args)
 task.upload_artifact(name=f"{model_variant}_hyp_config", artifact_object=model_hyps)
 result_file = working_dir / model_variant / "results.csv"
 task.upload_artifact(name="results", artifact_object=result_file)
-task.flush() 
-
+result_model = working_dir / model_variant / "weights" / "best.pt"
+task.upload_artifact(name=f"{model_variant}", artifact_object=result_model)
+        
 # output info
 output_model = task.models.output[0] # get the most recent model. there should be only 1
 task.set_parameter("output_model_project", project_name)
@@ -160,6 +160,8 @@ task.set_parameter("output_model_id", output_model.id)
 task.set_parameter("output_model_name", output_model.name)
 task.set_parameter("output_model_variant", model_variant)
 
-# shutil.rmtree(working_dir) # clean up output temp files
+task.flush()
+if os.path.exists(working_dir.parent): 
+        shutil.rmtree(working_dir.parent) # clean up output temp dir
 
 task.mark_completed(status_message=f"Completed training {model_variant} output:{output_model.name} id:{output_model.id}")

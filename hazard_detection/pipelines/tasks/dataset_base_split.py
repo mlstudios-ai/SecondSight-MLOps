@@ -207,6 +207,12 @@ print('Uploading dataset in the background')
 dataset.upload()
 dataset.finalize()
 
+task.flush()
+if os.path.exists(dest_path): 
+        # NOTE: only split dataset on disk is removed, 
+        # the original download is part of the cache, hence stays
+        shutil.rmtree(dest_path) # clean up
+        
 print('Done')
 print("output_dataset_project", dataset.project)
 print("output_dataset_id", dataset.id)

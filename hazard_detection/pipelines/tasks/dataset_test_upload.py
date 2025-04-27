@@ -2,6 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 
+import shutil
 from clearml import Task, Dataset, StorageManager
 from enigmaai.config import Project, Config, ConfigFactory
 
@@ -65,6 +66,10 @@ print('Uploading test dataset in the background')
 
 dataset.upload()
 dataset.finalize()
+
+task.flush()
+if os.path.exists(dataset_path): 
+        shutil.rmtree(dataset_path) # clean up
 
 task.set_parameter("output_dataset_project", dataset.project)
 task.set_parameter("output_dataset_id", dataset.id)

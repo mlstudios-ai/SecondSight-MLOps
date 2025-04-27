@@ -4,11 +4,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 
 from clearml import Task, Dataset, Model
 from pathlib import Path
-import yaml
 import os
 import shutil
 import tempfile
-import torch
 from ultralytics import YOLO
 from enigmaai import util
 from enigmaai.config import Project, Config, ConfigFactory
@@ -53,9 +51,6 @@ test_dataset_id = task_params['General/test_dataset_id']
 test_dataset_name = task_params["General/test_dataset_name"]
 draft_model_id = task_params['General/draft_model_id']
 pub_model_name = task_params["General/pub_model_name"]
-
-
-
 
 # no test dataset provided
 if not test_dataset_id and not test_dataset_name:
@@ -159,5 +154,9 @@ task.set_parameter("best_model_project", project_name)
 task.set_parameter("best_model_id", best_model.id)
 task.set_parameter("best_model_name", best_model.name)
 task.set_parameter("best_model_variant", best_model.name)
+
+task.flush()
+if os.path.exists(working_dir.parent): 
+        shutil.rmtree(working_dir.parent) # clean up output temp dir
 
 task.mark_completed(status_message=f"Best evaluated model name:{best_model.name} id:{best_model.id}")
