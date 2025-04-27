@@ -45,7 +45,7 @@ params = {
 }
 
 task.connect(params)
-# task.execute_remotely(queue_name="default")
+task.execute_remotely(queue_name="training")
 task_params = task.get_parameters()
 print("model_eval params=", task_params)
 
