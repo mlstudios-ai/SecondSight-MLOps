@@ -25,6 +25,8 @@ params = {
     'dataset_url': ''
 }
 
+print("dataset_base_upload params=", params)
+
 task.connect(params)
 task.execute_remotely(queue_name="default")
 

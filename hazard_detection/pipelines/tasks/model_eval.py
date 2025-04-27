@@ -14,22 +14,15 @@ from enigmaai import util
 from enigmaai.config import Project, Config, ConfigFactory
 
 """
-Constraints and requirements from the Business and data understanding phase will shape this phase. 
-For example, the application domain’s model evaluation metrics, might include performance metrics, 
-robustness, fairness, scalability, interpretability, model complexity degree, and model resource 
-demand. It is suggested to evaluate the models on at least six complementary properties. Besides a 
-performance metric, soft measures such as robustness, explainability, latency amongst others must 
-be evaluated. The measures can be weighted differently depending on the application. In practical 
-applications, explainability or robustness might be valued more than accuracy. Additionally, the 
-model’s fairness or privacy might have to be assessed and mitigated. 
+For hazard detection, accident prevention is paramount. To detect an obstacle more important
+then the what type of object is the obstacle. Therefore, Recall performance metric will be 
+used to evaluate the model. The newly trained (in draft) is compared to the current live (published)
+model. If the Recall score is higher, the newly train model will be published for inferencing.
 
-Performance requirements:
-Recall
-Latency
-Memory (or resource) consumption
+Other metrics, both from model training (such as latency) and outside (such is resource demands), 
+are not considered at this stage. 
 
-Here we test the recall on a common test dataset. The model complexity, interpretability etc is fine 
-as the model is very small and straght forward. 
+This task will compare two models using the same dataset for evaluation. 
 """
 
 # get project configurations
@@ -40,12 +33,17 @@ task = Task.init(project_name=project_name,
                 task_name="Model Evaluation", 
                 task_type=Task.TaskTypes.testing)
 
+"""
+One of test_dataset_id or test_dataset_name must be provided to load test dataset
+"""
 params = {
-    'test_dataset_id': '',          # specific dataset for testing
-    'test_dataset_name': '',        # name of the dataset for testing
-    'draft_model_id': '',           # the unpublished model to evaluate 
-    'pub_model_name': '',           # the published model name (also variant)
+    'test_dataset_id': '',      # specific version of the dataset. if provided, ignore dataset_name
+    'test_dataset_name': '',    # latest registered dataset. used if dataset_id is empty
+    'draft_model_id': '',       # the unpublished model to evaluate 
+    'pub_model_name': '',       # the published model name (also variant)
 }
+
+print("model_eval params=", params)
 
 test_dataset_id = params['test_dataset_id']
 test_dataset_name = params["test_dataset_name"]

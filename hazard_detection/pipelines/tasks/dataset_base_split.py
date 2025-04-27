@@ -58,6 +58,10 @@ task = Task.init(project_name=project_name,
                 task_name="Split Base Dataset", 
                 task_type=Task.TaskTypes.data_processing)
 
+"""
+One of base_dataset_id, base_dataset_name, or base_dataset_url must be provided to load dataset.
+It will take the paramater in the order of the param list.
+"""
 params = {
     'base_dataset_id': '',
     'base_dataset_name': '',
@@ -66,6 +70,8 @@ params = {
     'val_size': 0.3,
     'test_size': 0.0,
 }
+
+print("dataset_base_split params=", params)
 
 # logger = task.get_logger()
 task.connect(params)

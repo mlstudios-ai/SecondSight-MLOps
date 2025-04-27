@@ -42,13 +42,19 @@ task = Task.init(project_name=project_name,
                 task_name="Model Training", 
                 task_type=Task.TaskTypes.training)
 
+"""
+One of dataset_id or dataset_name must be provided to load dataset
+model_id is optional, if not provided, use model_variant to load latest publised model
+"""
 params = {
-    'dataset_id': '',               # specific version of the dataset
-    'dataset_name': '',             # latest registered dataset
-    'model_id': '',                 # specific version of the model 
-    'model_variant': '',            # base model variant from ultralytics if no model given
+    'dataset_id': '',               # specific version of the dataset. if provided, ignore dataset_name
+    'dataset_name': '',             # latest registered dataset. used if dataset_id is empty
+    'model_id': '',                 # load specific version of the model 
+    'model_variant': '',            # base model variant from ultralytics. if model_id is empty, also used to load latest version
     'model_hyps': ''                # string format of dictionary of hyperparameters for YOLO.train()
 }
+
+print("model_train params=", params)
 
 task.connect(params)
 # task.execute_remotely(queue_name="training")
