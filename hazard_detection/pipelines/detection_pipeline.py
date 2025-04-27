@@ -10,7 +10,7 @@ from enigmaai.config import Project, Config, ConfigFactory
 
 """
 YOLOv11 model end-to-end MLOps pipeline. The pipeline is designed to cater for flexibilities 
-of different needs at each point of the pipeline. 
+of different needs at different point of the pipeline. 
 
 Sometimes user may want to execute a task for specific purposes and then continue with the pipeline.
 Some steps can be skipped if the minimum parameters are not provided as specified pipeline parameter 
@@ -40,7 +40,7 @@ pipe = PipelineController(name=pipeline_name,
 pipe.set_default_execution_queue("default")
 
 """ 
-STEP 0: Upload test dataset
+STEP 1.1: Upload test dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
@@ -65,7 +65,7 @@ pipe.add_step(
 )
 
 """ 
-STEP 1: Load base dataset
+STEP 1.2: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
