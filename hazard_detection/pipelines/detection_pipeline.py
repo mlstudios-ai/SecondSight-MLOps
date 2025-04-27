@@ -30,37 +30,63 @@ allows to adjust to various cirsumstances for the users.
 # get project configurations
 project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
 project_name = project.get('project-name')
+pipeline_name = "Train YOLOv11 Model"
 
 # Connecting ClearML with the current pipeline, from here on everything is logged automatically
-pipe = PipelineController(name="Train YOLOv11 Model", 
+pipe = PipelineController(name=pipeline_name, 
                           project=project_name, 
                           add_pipeline_tags=False)
 
 pipe.set_default_execution_queue("default")
 
 """ 
-STEP 1: Load initial dataset
+STEP 0: Upload test dataset
+"""
+
+# intial dataset to download. If none provided, task will complete without upload
+test_dataset_url = project.get("test-dataset-url")
+pipe.add_parameter("test_dataset_url", test_dataset_url, "(Optional) URL to the test dataset.")
+
+def pre_test_upload_callback(pipeline, node, param_override) -> bool:    
+    print("Cloning upload_test_dataset id={}".format(node.base_task_id))    
+    return True
+
+def post_test_upload_callback(pipeline, node) -> None:   
+    print("Completed upload_test_dataset id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_step(
+    name="upload_test_dataset",
+    base_task_project=project_name,
+    base_task_name="Upload Evaluation Dataset",
+    parameter_override={"General/dataset_url": "${pipeline.test_dataset_url}"},
+    pre_execute_callback=pre_test_upload_callback,
+    post_execute_callback=post_test_upload_callback
+)
+
+""" 
+STEP 1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
 base_dataset_url = project.get("base-dataset-url")
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
 
-def pre_upload_callback(pipeline, node, param_override) -> bool:    
-    print("Cloning load_base_dataset id={}".format(node.base_task_id))    
+def pre_base_upload_callback(pipeline, node, param_override) -> bool:    
+    print("Cloning upload_base_dataset id={}".format(node.base_task_id))    
     return True
 
-def post_upload_callback(pipeline, node) -> None:   
-    print("Completed load_base_dataset id={} {}".format(node.base_task_id, node.executed))    
+def post_base_upload_callback(pipeline, node) -> None:   
+    print("Completed upload_base_dataset id={} {}".format(node.base_task_id, node.executed))    
     return
 
 pipe.add_step(
-    name="load_base_dataset",
+    name="upload_base_dataset",
     base_task_project=project_name,
     base_task_name="Upload Base Dataset",
     parameter_override={"General/dataset_url": "${pipeline.base_dataset_url}"},
-    pre_execute_callback=pre_upload_callback,
-    post_execute_callback=post_upload_callback
+    pre_execute_callback=pre_base_upload_callback,
+    post_execute_callback=post_base_upload_callback
 )
 
 """ 
@@ -84,12 +110,12 @@ def post_processing_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="dataset_processing",
-    parents=["load_base_dataset"],
+    parents=["upload_base_dataset"],
     base_task_project=project_name,
     base_task_name="Split Base Dataset",
     parameter_override={
         "General/base_dataset_id": (
-            "${load_base_dataset.parameters.General/output_dataset_id}"
+            "${upload_base_dataset.parameters.General/output_dataset_id}"
             if pipe.get_parameters()["base_dataset_url"] # url not provided, no base dataset upload
             else "${pipeline.base_dataset_id}"), 
         "General/base_dataset_name": "${pipeline.base_dataset_name}",
@@ -179,12 +205,15 @@ def post_eval_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="model_evaluation",
-    parents=["model_training"],
+    parents=["model_training", "upload_test_dataset"],
     base_task_project=project_name,
     base_task_name="Model Evaluation",
     parameter_override={
-        "General/test_dataset_id": "${pipeline.test_dataset_id}",
-        "General/test_dataset_name": "${pipeline.test_dataset_id}",
+        "General/test_dataset_id":  (
+            "${upload_test_dataset.output_dataset_id}"
+            if pipe.get_parameters()["test_dataset_url"] 
+            else "${pipeline.train_dataset_id}"), # no test or eval dataset upload
+        "General/test_dataset_name": "${pipeline.test_dataset_name}",
         "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
         "General/pub_model_name": "${pipeline.model_variant}"
     },
@@ -195,8 +224,10 @@ pipe.add_step(
 remote_execution = project.get("pipeline-remote-execution")
 
 if remote_execution:
+    print(f"Executing '{pipeline_name}' pipeline remotely")
     pipe.start()
 else:
+    print(f"Executing '{pipeline_name}' pipeline locally")
     pipe.start_locally(run_pipeline_steps_locally=True)
 
 print("done")
