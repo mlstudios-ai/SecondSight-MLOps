@@ -56,15 +56,15 @@ params = {
 
 task.connect(params)
 # task.execute_remotely(queue_name="training")
+task_params = task.get_parameters()
+print("model_train params=", task_params)
 
-print("model_train params=", task.get_parameters())
-
-dataset_id = params['dataset_id']
-dataset_name = params['dataset_name']
-model_id = params['model_id']
-model_variant = params["model_variant"]
+dataset_id = task_params['General/dataset_id']
+dataset_name = task_params['General/dataset_name']
+model_id = task_params['General/model_id']
+model_variant = task_params["General/model_variant"]
 model_name = model_variant
-model_hyps_str = params["model_hyps"]
+model_hyps_str = task_params["General/model_hyps"]
         
 # validate task input params
 if not dataset_id and not dataset_name:

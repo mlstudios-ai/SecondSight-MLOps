@@ -31,11 +31,11 @@ params = {
 
 task.connect(params)
 task.execute_remotely(queue_name="default")
-
-print("dataset_test_upload params=", task.get_parameters())
+task_params = task.get_parameters()
+print("dataset_test_upload params=", task_params)
 
 dataset_name = "test_dataset"
-dataset_url = params['dataset_url']
+dataset_url = task_params['General/dataset_url']
 
 # validate task input params
 if not dataset_url:

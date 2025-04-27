@@ -71,16 +71,15 @@ params = {
     'test_size': 0.0,
 }
 
-# logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="default")
-
-print("dataset_base_split params=", task.get_parameters())
+task_params = task.get_parameters()
+print("dataset_base_split params=", task_params)
 
 dataset_name = "dataset" # name for uploading the output dataset
-base_dataset_id = params['base_dataset_id']
-base_dataset_name = params['base_dataset_name']
-base_dataset_url = params['base_dataset_url']
+base_dataset_id = task_params['General/base_dataset_id']
+base_dataset_name = task_params['General/base_dataset_name']
+base_dataset_url = task_params['General/base_dataset_url']
 
 # validate task input params
 if not base_dataset_id and not base_dataset_name and not base_dataset_url:
@@ -120,9 +119,9 @@ clean_file_stems = clean_dataset_file_stems(extract_path / "images", extract_pat
 print("clean_file_stems:", len(clean_file_stems))
 
 # split sizes
-val_size = float(params['val_size'])
-test_size = float(params['test_size'])
-random_state = int(params['random_state'])
+val_size = float(task_params['General/val_size'])
+test_size = float(task_params['General/test_size'])
+random_state = int(task_params['General/random_state'])
 
 # split train, val, test sets according task params
 train_stems, val_stems = train_test_split(clean_file_stems, 
