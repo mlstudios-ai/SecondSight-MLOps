@@ -146,11 +146,13 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="Model Training",
     parameter_override={
-        "General/dataset_id": (
-            "${dataset_processing.parameters.General/output_dataset_id}"
-            if pipe.get_parameters()["base_dataset_url"] and pipe.get_parameters()["base_dataset_name"]
-            else "${pipeline.train_dataset_id}"), # no base dataset download and no output    
-        "General/dataset_name": "${pipeline.train_dataset_name}",     
+        # "General/dataset_id": (
+        #     "${dataset_processing.parameters.General/output_dataset_id}"
+        #     if pipe.get_parameters()["base_dataset_url"] and pipe.get_parameters()["base_dataset_name"]
+        #     else "${pipeline.train_dataset_id}"), # no base dataset download and no output    
+        # "General/dataset_name": "${pipeline.train_dataset_name}", 
+        "General/dataset_id": "",
+        "General/dataset_name": "",     
         "General/model_id": "${pipeline.model_id}",     
         "General/model_variant": "${pipeline.model_variant}",
         "General/model_hyps": "${pipeline.model_hyps}",
@@ -165,7 +167,9 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="Model Evaluation",
     parameter_override={
+        "General/test_dataset_id": "7a024b6bd16640e8a556ea4bc04a4289",
         "General/test_dataset_name": "test_dataset",
+        # "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
         "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
         "General/pub_model_name": "yolo11n",
     }
