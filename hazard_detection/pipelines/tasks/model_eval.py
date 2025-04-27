@@ -137,7 +137,6 @@ else:
     
 # publish the best model
 if best_model.id == draft_model.id: # publish new model
-    best_model.ta
     best_model.publish()
     print(f"Published new model name:{best_model.name} id:{best_model.id}")
 else: # new model not better, nothing to publish
