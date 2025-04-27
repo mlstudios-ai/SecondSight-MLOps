@@ -25,10 +25,10 @@ params = {
     'dataset_url': ''
 }
 
-print("dataset_base_upload params=", params)
-
 task.connect(params)
 task.execute_remotely(queue_name="default")
+
+print("dataset_base_upload params=", task.get_parameters())
 
 dataset_name = "base_dataset"
 dataset_url = params['dataset_url']

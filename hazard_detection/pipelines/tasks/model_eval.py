@@ -43,8 +43,6 @@ params = {
     'pub_model_name': '',       # the published model name (also variant)
 }
 
-print("model_eval params=", params)
-
 test_dataset_id = params['test_dataset_id']
 test_dataset_name = params["test_dataset_name"]
 draft_model_id = params['draft_model_id']
@@ -52,6 +50,8 @@ pub_model_name = params["pub_model_name"]
 
 task.connect(params)
 # task.execute_remotely(queue_name="default")
+
+print("model_eval params=", task.get_parameters())
 
 # no test dataset provided
 if not test_dataset_id and not test_dataset_name:

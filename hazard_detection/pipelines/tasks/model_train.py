@@ -54,10 +54,10 @@ params = {
     'model_hyps': ''                # string format of dictionary of hyperparameters for YOLO.train()
 }
 
-print("model_train params=", params)
-
 task.connect(params)
 # task.execute_remotely(queue_name="training")
+
+print("model_train params=", task.get_parameters())
 
 dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']

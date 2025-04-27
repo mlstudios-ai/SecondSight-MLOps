@@ -71,15 +71,13 @@ params = {
     'test_size': 0.0,
 }
 
-print("dataset_base_split params=", params)
-
 # logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="default")
 
-dataset_name = "dataset" # name for uploading the output dataset
+print("dataset_base_split params=", task.get_parameters())
 
-# download dataset 
+dataset_name = "dataset" # name for uploading the output dataset
 base_dataset_id = params['base_dataset_id']
 base_dataset_name = params['base_dataset_name']
 base_dataset_url = params['base_dataset_url']
