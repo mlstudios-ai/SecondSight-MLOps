@@ -125,7 +125,7 @@ if model_id:        # get the specific model
     input_model_path = server_model.get_local_copy(raise_on_error=True)
     print(f"Downloaded model name: {server_model.name} id:{server_model.id} to: {input_model_path}")
 elif model_name:    # get the latest from Model Registry, if not found, use default ultralytics base model
-    server_models = Model.query_models(project_name=project_name, model_name=model_name, only_published=True)
+    server_models = Model.query_models(model_name=model_name, only_published=True)
     if server_models:
         server_model = server_models[0]
         input_model_path = server_model.get_local_copy(raise_on_error=True)
@@ -159,5 +159,3 @@ task.set_parameter("output_model_project", project_name)
 task.set_parameter("output_model_id", output_model.id)
 task.set_parameter("output_model_name", output_model.name)
 task.set_parameter("output_model_variant", model_variant)
-
-task.mark_completed(status_message=f"Completed training {model_variant} output:{output_model.name} id:{output_model.id}")

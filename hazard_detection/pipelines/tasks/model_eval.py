@@ -59,8 +59,7 @@ if not test_dataset_id and not test_dataset_name:
     
 # no model provided for evaluation
 if not draft_model_id:
-    task.mark_completed(status_message="No model provided for evaluation.")
-    exit(0)
+    raise ValueError("Missing new/draft model. Please provide draft_model_id.")
     
 # Mandatory input param
 if not pub_model_name:
@@ -76,7 +75,7 @@ draft_model = Model(model_id=draft_model_id)
 print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
 
 # fetch the published best model
-server_models = Model.query_models(project_name=project_name, model_name=pub_model_name, only_published=True)
+server_models = Model.query_models(model_name=pub_model_name, only_published=True)
 if not server_models:     
     best_model = draft_model # best published model not found, use first draft as best
     print(f"No published model found, use draft as the best model name:{draft_model.name} id:{draft_model.id}")
@@ -138,6 +137,7 @@ else:
     
 # publish the best model
 if best_model.id == draft_model.id: # publish new model
+    best_model.ta
     best_model.publish()
     print(f"Published new model name:{best_model.name} id:{best_model.id}")
 else: # new model not better, nothing to publish
@@ -154,5 +154,3 @@ task.set_parameter("best_model_project", project_name)
 task.set_parameter("best_model_id", best_model.id)
 task.set_parameter("best_model_name", best_model.name)
 task.set_parameter("best_model_variant", best_model.name)
-
-task.mark_completed(status_message=f"Best evaluated model name:{best_model.name} id:{best_model.id}")
