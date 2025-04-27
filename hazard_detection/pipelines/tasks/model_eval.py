@@ -137,11 +137,11 @@ else:
     best_model = pub_model if pub_recall > draft_recall else draft_model
     
 # publish the best model
-if best_model.id != pub_model.id: # publish new model
+if best_model.id == draft_model.id: # publish new model
     best_model.publish()
     print(f"Published new model name:{best_model.name} id:{best_model.id}")
 else: # new model not better, nothing to publish
-    print(f"Existing model name:{best_model.name} id:{best_model.id} is already the best, nothing to publish.")
+    print(f"Existing published model name:{best_model.name} id:{best_model.id} is already the best, nothing to publish.")
 
 # show output    
 print("best_model_project:", project_name)
