@@ -160,8 +160,4 @@ task.set_parameter("output_model_id", output_model.id)
 task.set_parameter("output_model_name", output_model.name)
 task.set_parameter("output_model_variant", model_variant)
 
-task.flush()
-if os.path.exists(working_dir.parent): 
-        shutil.rmtree(working_dir.parent) # clean up output temp dir
-
 task.mark_completed(status_message=f"Completed training {model_variant} output:{output_model.name} id:{output_model.id}")

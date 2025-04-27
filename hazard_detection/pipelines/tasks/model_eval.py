@@ -66,6 +66,11 @@ if not draft_model_id:
 if not pub_model_name:
     raise ValueError("Missing model. Please provide pub_model_name.")
 
+# use temp directory for output
+working_dir = Path(tempfile.mkdtemp()) / project_name
+working_dir.mkdir(parents=True, exist_ok=True)    
+print("Working temp directory at:", working_dir)
+
 # fetch the specific model for evaluation    
 draft_model = Model(model_id=draft_model_id)    
 print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
@@ -92,11 +97,6 @@ else:
         server_dataset = Dataset.get(dataset_name=test_dataset_name, dataset_project=project_name, only_completed=True,  alias="test")
 
     dataset_path = server_dataset.get_local_copy()
-
-    # use temp directory for output
-    working_dir = Path(tempfile.mkdtemp()) / project_name
-    working_dir.mkdir(parents=True, exist_ok=True)    
-    print("Working temp directory at:", working_dir)
 
     # contruct YAML config file
     data_yaml_path = working_dir / 'data.yaml'
@@ -154,9 +154,5 @@ task.set_parameter("best_model_project", project_name)
 task.set_parameter("best_model_id", best_model.id)
 task.set_parameter("best_model_name", best_model.name)
 task.set_parameter("best_model_variant", best_model.name)
-
-task.flush()
-if os.path.exists(working_dir.parent): 
-        shutil.rmtree(working_dir.parent) # clean up output temp dir
 
 task.mark_completed(status_message=f"Best evaluated model name:{best_model.name} id:{best_model.id}")
