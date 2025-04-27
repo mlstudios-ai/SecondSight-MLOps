@@ -43,8 +43,7 @@ STEP 1: Load initial dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-# base_dataset_url = project.get("base-dataset-url")
-base_dataset_url = ""
+base_dataset_url = project.get("base-dataset-url")
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
 
 def pre_upload_callback(pipeline, node, param_override) -> bool:    
@@ -118,7 +117,7 @@ def load_hyp_config(model_variant) -> dict:
 
 # model training settings
 pipe.add_parameter("train_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore train_dataset_name")
-pipe.add_parameter("train_dataset_name", "", "(Optional) dataset", "Used only if train_dataset_id is empty.")
+pipe.add_parameter("train_dataset_name", "test_dataset", "(Optional) dataset", "Used only if train_dataset_id is empty.")
 pipe.add_parameter("model_id", "", "(Optional) Pre-trained mode. If not provided, use default based on model_variant")
 pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant to train. Saved as model_name.")
 pipe.add_parameter("model_hyps", "", "Dictionary of YOLO.train() input params. Defaults from model variant config file")
@@ -154,8 +153,10 @@ pipe.add_step(
     parameter_override={
         "General/dataset_id": (
             "${dataset_processing.parameters.General/output_dataset_id}"
-            if pipe.get_parameters()["base_dataset_url"] and pipe.get_parameters()["base_dataset_name"]
-            else "${pipeline.train_dataset_id}"), # no base dataset download and no output    
+            if pipe.get_parameters()["base_dataset_url"] 
+                or pipe.get_parameters()["base_dataset_id"]
+                or pipe.get_parameters()["base_dataset_name"]
+            else "${pipeline.train_dataset_id}"), # no output from previous step    
         "General/dataset_name": "${pipeline.train_dataset_name}", 
         "General/model_id": "${pipeline.model_id}",     
         "General/model_variant": "${pipeline.model_variant}",
