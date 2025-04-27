@@ -210,7 +210,7 @@ pipe.add_step(
     base_task_name="Model Evaluation",
     parameter_override={
         "General/test_dataset_id":  (
-            "${upload_test_dataset.General/output_dataset_id}"
+            "${upload_test_dataset.parameters.General/output_dataset_id}"
             if pipe.get_parameters()["test_dataset_url"] 
             else "${pipeline.train_dataset_id}"), # no test or eval dataset upload
         "General/test_dataset_name": "${pipeline.test_dataset_name}",
