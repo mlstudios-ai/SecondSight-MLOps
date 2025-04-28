@@ -20,7 +20,7 @@ base-dataset-url: "https://raw.githubusercontent.com/vanilla-ai-ml/large_dataset
 # The initial model download location. {} for model variant format, specific to YOLO
 base-model-url: "https://github.com/ultralytics/assets/releases/download/v8.3.0/{}.pt"
 
-# The initial evaluation test dataset download location
-test-dataset-url: "https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/test_dataset.zip"
+# The initial evaluation dataset download location
+eval-dataset-url: "https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/test_dataset.zip"
 
 

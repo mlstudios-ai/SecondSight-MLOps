@@ -40,28 +40,28 @@ pipe = PipelineController(name=pipeline_name,
 pipe.set_default_execution_queue("default")
 
 """ 
-STEP 1.1: Upload test dataset
+STEP 1.1: Upload eval dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-test_dataset_url = project.get("test-dataset-url")
-pipe.add_parameter("test_dataset_url", test_dataset_url, "(Optional) URL to the test dataset.")
+eval_dataset_url = project.get("eval-dataset-url")
+pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
 
-def pre_test_upload_callback(pipeline, node, param_override) -> bool:    
-    print("Cloning upload_test_dataset id={}".format(node.base_task_id))    
+def pre_eval_upload_callback(pipeline, node, param_override) -> bool:    
+    print("Cloning upload_eval_dataset id={}".format(node.base_task_id))    
     return True
 
-def post_test_upload_callback(pipeline, node) -> None:   
-    print("Completed upload_test_dataset id={} {}".format(node.base_task_id, node.executed))    
+def post_eval_upload_callback(pipeline, node) -> None:   
+    print("Completed upload_eval_dataset id={} {}".format(node.base_task_id, node.executed))    
     return
 
 pipe.add_step(
-    name="upload_test_dataset",
+    name="upload_eval_dataset",
     base_task_project=project_name,
     base_task_name="Upload Evaluation Dataset",
-    parameter_override={"General/dataset_url": "${pipeline.test_dataset_url}"},
-    pre_execute_callback=pre_test_upload_callback,
-    post_execute_callback=post_test_upload_callback
+    parameter_override={"General/dataset_url": "${pipeline.eval_dataset_url}"},
+    pre_execute_callback=pre_eval_upload_callback,
+    post_execute_callback=post_eval_upload_callback
 )
 
 """ 
@@ -143,7 +143,7 @@ def load_hyp_config(model_variant) -> dict:
 
 # model training settings
 pipe.add_parameter("train_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore train_dataset_name")
-pipe.add_parameter("train_dataset_name", "test_dataset", "(Optional) dataset", "Used only if train_dataset_id is empty.")
+pipe.add_parameter("train_dataset_name", "base_dataset", "(Optional) dataset", "Used only if train_dataset_id is empty.")
 pipe.add_parameter("model_id", "", "(Optional) Pre-trained mode. If not provided, use default based on model_variant")
 pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant to train. Saved as model_name.")
 pipe.add_parameter("model_hyps", "", "Dictionary of YOLO.train() input params. Defaults from model variant config file")
@@ -192,8 +192,8 @@ pipe.add_step(
     post_execute_callback=post_training_callback
 )
 
-pipe.add_parameter("test_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore test_dataset_name")
-pipe.add_parameter("test_dataset_name", "dataset", "(Optional) Used only if train_dataset_id is empty.")
+pipe.add_parameter("eval_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore eval_dataset_name")
+pipe.add_parameter("eval_dataset_name", "dataset", "(Optional) Used only if train_dataset_id is empty.")
 
 def pre_eval_callback(pipeline, node, param_override) -> bool:    
     print("Cloning model_evaluation id={}".format(node.base_task_id))    
@@ -205,15 +205,15 @@ def post_eval_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="model_evaluation",
-    parents=["model_training", "upload_test_dataset"],
+    parents=["model_training", "upload_eval_dataset"],
     base_task_project=project_name,
     base_task_name="Model Evaluation",
     parameter_override={
-        "General/test_dataset_id":  (
-            "${upload_test_dataset.parameters.General/output_dataset_id}"
-            if pipe.get_parameters()["test_dataset_url"] 
-            else "${pipeline.train_dataset_id}"), # no test or eval dataset upload
-        "General/test_dataset_name": "${pipeline.test_dataset_name}",
+        "General/eval_dataset_id":  (
+            "${upload_eval_dataset.parameters.General/output_dataset_id}"
+            if pipe.get_parameters()["eval_dataset_url"] 
+            else "${pipeline.train_dataset_id}"), # no eval dataset upload
+        "General/eval_dataset_name": "${pipeline.eval_dataset_name}",
         "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
         "General/pub_model_name": "${pipeline.model_variant}"
     },

@@ -33,11 +33,11 @@ task = Task.init(project_name=project_name,
                 task_type=Task.TaskTypes.testing)
 
 """
-One of test_dataset_id or test_dataset_name must be provided to load test dataset
+One of eval_dataset_id or eval_dataset_name must be provided to load evaluation dataset
 """
 params = {
-    'test_dataset_id': '',      # specific version of the dataset. if provided, ignore dataset_name
-    'test_dataset_name': '',    # latest registered dataset. used if dataset_id is empty
+    'eval_dataset_id': '',      # specific version of the dataset. if provided, ignore dataset_name
+    'eval_dataset_name': '',    # latest registered dataset. used if dataset_id is empty
     'draft_model_id': '',       # the unpublished model to evaluate 
     'pub_model_name': '',       # the published model name (also variant)
 }
@@ -47,13 +47,13 @@ task.execute_remotely(queue_name="training")
 task_params = task.get_parameters()
 print("model_eval params=", task_params)
 
-test_dataset_id = task_params['General/test_dataset_id']
-test_dataset_name = task_params["General/test_dataset_name"]
+eval_dataset_id = task_params['General/eval_dataset_id']
+eval_dataset_name = task_params["General/eval_dataset_name"]
 draft_model_id = task_params['General/draft_model_id']
 pub_model_name = task_params["General/pub_model_name"]
 
-# no test dataset provided
-if not test_dataset_id and not test_dataset_name:
+# no eval dataset provided
+if not eval_dataset_id and not eval_dataset_name:
     task.mark_completed(status_message="No dataset provided for evaluation.")
     exit(0)
     
@@ -90,10 +90,10 @@ else:
     """ 
         
     # load dataset
-    if test_dataset_id:  # get specific dataset
-        server_dataset = Dataset.get(dataset_id=test_dataset_id, alias="test")
-    elif test_dataset_name: # get the latest registered dataset
-        server_dataset = Dataset.get(dataset_name=test_dataset_name, dataset_project=project_name, only_completed=True,  alias="test")
+    if eval_dataset_id:  # get specific dataset
+        server_dataset = Dataset.get(dataset_id=eval_dataset_id, alias="eval")
+    elif eval_dataset_name: # get the latest registered dataset
+        server_dataset = Dataset.get(dataset_name=eval_dataset_name, dataset_project=project_name, only_completed=True,  alias="eval")
 
     dataset_path = server_dataset.get_local_copy()
 
