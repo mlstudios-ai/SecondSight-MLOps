@@ -141,7 +141,12 @@ else:
     print("pub_metrics=", pub_metrics.mean_results(), " recall=", pub_recall)
 
     # compare and select the best model
-    best_model = pub_model if pub_recall > draft_recall else draft_model
+    best_model = pub_model if pub_recall > draft_recall else draft_model    
+    
+    # upload results reference for report analysis 
+    task.upload_artifact(name=f"{pub_model_name}_eval_config", artifact_object=eval_args)
+    task.upload_artifact(name=f"{pub_model_name}_draft_metrics", artifact_object=draft_metrics)
+    task.upload_artifact(name=f"{pub_model_name}_pub_metrics", artifact_object=pub_metrics)
     
 # publish the best model
 if best_model.id == draft_model.id: # publish new model
