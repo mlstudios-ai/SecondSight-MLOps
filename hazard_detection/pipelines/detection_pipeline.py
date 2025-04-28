@@ -96,7 +96,7 @@ STEP 2: Dataset processing
 # processing starting dataset for pipeline
 # it will get dataset_id from step 1, if not provided, this will be used
 pipe.add_parameter("base_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore base_dataset_name")
-pipe.add_parameter("base_dataset_name", "", "(Optional) Used only if base_dataset_id is empty.")
+pipe.add_parameter("base_dataset_name", "base_dataset", "(Optional) Used only if base_dataset_id is empty.")
 pipe.add_parameter("random_state", 42, "Specify random state for consistent training")
 pipe.add_parameter("val", 0.30, "Validation split. Percentage of entire dataset.")
 
@@ -143,7 +143,7 @@ def load_hyp_config(model_variant) -> dict:
 
 # model training settings
 pipe.add_parameter("train_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore train_dataset_name")
-pipe.add_parameter("train_dataset_name", "base_dataset", "(Optional) dataset", "Used only if train_dataset_id is empty.")
+pipe.add_parameter("train_dataset_name", "dataset", "(Optional) dataset", "Used only if train_dataset_id is empty.")
 pipe.add_parameter("model_id", "", "(Optional) Pre-trained mode. If not provided, use default based on model_variant")
 pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant to train. Saved as model_name.")
 pipe.add_parameter("model_hyps", "", "Dictionary of YOLO.train() input params. Defaults from model variant config file")
@@ -207,12 +207,12 @@ def load_eval_config(model_variant) -> dict:
     return eval_confg
 
 pipe.add_parameter("eval_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore eval_dataset_name")
-pipe.add_parameter("eval_dataset_name", "dataset", "(Optional) Used only if train_dataset_id is empty.")
+pipe.add_parameter("eval_dataset_name", "eval_dataset", "(Optional) Used only if train_dataset_id is empty.")
 pipe.add_parameter("eval_args", "", "Dictionary of YOLO.val() input params. Defaults from model variant config file")
 
 def pre_eval_callback(pipeline, node, param_override) -> bool:    
     print("Cloning model_evaluation id={}".format(node.base_task_id))      # param validation check
-    model_variant = pipe.getparams()["General/model_variant"]
+    model_variant = pipe.get_parameters()["model_variant"]
     if not model_variant:
         raise ValueError(f"Missing model_variant param value.")
     
