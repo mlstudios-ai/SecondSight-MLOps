@@ -192,11 +192,36 @@ pipe.add_step(
     post_execute_callback=post_training_callback
 )
 
+"""
+STEP 4: Model Evaluation
+"""
+
+def load_eval_config(model_variant) -> dict:
+    eval_config_file = f"{model_variant}_eval_config.yaml"
+    eval_config_path = Path(__file__).parent / eval_config_file
+    print("eval_config_path=", eval_config_path.resolve())
+    if eval_config_path.exists():    
+        with open(eval_config_path, "r") as file:
+            eval_confg = yaml.safe_load(file)
+    
+    return eval_confg
+
 pipe.add_parameter("eval_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore eval_dataset_name")
 pipe.add_parameter("eval_dataset_name", "dataset", "(Optional) Used only if train_dataset_id is empty.")
+pipe.add_parameter("eval_args", "", "Dictionary of YOLO.val() input params. Defaults from model variant config file")
 
 def pre_eval_callback(pipeline, node, param_override) -> bool:    
-    print("Cloning model_evaluation id={}".format(node.base_task_id))    
+    print("Cloning model_evaluation id={}".format(node.base_task_id))      # param validation check
+    model_variant = pipe.getparams()["General/model_variant"]
+    if not model_variant:
+        raise ValueError(f"Missing model_variant param value.")
+    
+    # add default eval config if none provided     
+    if not param_override["General/eval_args"]:
+        eval_args = load_eval_config(model_variant)
+        eval_args_str = yaml.dump(eval_args) 
+        param_override["General/eval_args"] = eval_args_str
+    
     return True
 
 def post_eval_callback(pipeline, node) -> None:   
@@ -215,7 +240,8 @@ pipe.add_step(
             else "${pipeline.train_dataset_id}"), # no eval dataset upload
         "General/eval_dataset_name": "${pipeline.eval_dataset_name}",
         "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
-        "General/pub_model_name": "${pipeline.model_variant}"
+        "General/pub_model_name": "${pipeline.model_variant}",
+        "General/eval_args": "${pipeline.eval_args}"
     },
     pre_execute_callback=pre_eval_callback,
     post_execute_callback=post_eval_callback

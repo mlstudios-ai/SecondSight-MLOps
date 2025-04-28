@@ -6,6 +6,7 @@ from clearml import Task, Dataset, Model
 from pathlib import Path
 import os
 import shutil
+import yaml
 import tempfile
 from ultralytics import YOLO
 from enigmaai import util
@@ -40,6 +41,7 @@ params = {
     'eval_dataset_name': '',    # latest registered dataset. used if dataset_id is empty
     'draft_model_id': '',       # the unpublished model to evaluate 
     'pub_model_name': '',       # the published model name (also variant)
+    'eval_args': ''             # string format of dictionary of hyperparameters for YOLO.val()
 }
 
 task.connect(params)
@@ -51,6 +53,7 @@ eval_dataset_id = task_params['General/eval_dataset_id']
 eval_dataset_name = task_params["General/eval_dataset_name"]
 draft_model_id = task_params['General/draft_model_id']
 pub_model_name = task_params["General/pub_model_name"]
+eval_args_str = task_params["General/eval_args"]
 
 # no eval dataset provided
 if not eval_dataset_id and not eval_dataset_name:
@@ -64,6 +67,8 @@ if not draft_model_id:
 # Mandatory input param
 if not pub_model_name:
     raise ValueError("Missing model. Please provide pub_model_name.")
+
+eval_args = yaml.safe_load(eval_args_str)
 
 # use temp directory for output
 working_dir = Path(tempfile.mkdtemp()) / project_name
@@ -96,7 +101,7 @@ else:
         server_dataset = Dataset.get(dataset_name=eval_dataset_name, dataset_project=project_name, only_completed=True,  alias="eval")
 
     dataset_path = server_dataset.get_local_copy()
-
+    
     # contruct YAML config file
     data_yaml_path = working_dir / 'data.yaml'
     classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
@@ -108,23 +113,26 @@ else:
         f.write(f"names: {classes}\n")
         
     print("YAML file created at: ", data_yaml_path)
-
-    device_name = util.get_device_name()
+    
+    # eval input params: args + other data
+    eval_args = eval_args.copy() # copy to prevent altering original by reference
+    eval_args["data"] = str(data_yaml_path)
+    eval_args["name"] = pub_model_name
+    eval_args["device"] = util.get_device_name()
+    eval_args["project"] = str(working_dir)
         
     # evaluate the draft model    
     draft_model_path = draft_model.get_local_copy(raise_on_error=True)
     print(f"Downloaded draft model name: {draft_model.name} id:{draft_model.id} to: {draft_model_path}")
     draft_yolo_model = YOLO(draft_model_path)
-    draft_metrics = draft_yolo_model.val(data=data_yaml_path, split="test", imgsz=640, 
-                                         batch=16, conf=0.25, iou=0.6, device=device_name)
+    draft_metrics = draft_yolo_model.val(**eval_args)
     draft_recall = draft_metrics.box.map
 
     # evaluate the published model
     pub_model_path = pub_model.get_local_copy(raise_on_error=True)
     print(f"Downloaded published model name: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")
     pub_yolo_model = YOLO(pub_model_path)
-    pub_metrics = pub_yolo_model.val(data=data_yaml_path, split="test", imgsz=640, 
-                                     batch=16, conf=0.25, iou=0.6, device=device_name)
+    pub_metrics = pub_yolo_model.val(**eval_args)
     pub_recall = pub_metrics.box.map
     
     # show metrics for comparision
