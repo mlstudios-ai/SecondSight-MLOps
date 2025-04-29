@@ -98,9 +98,11 @@ elif base_dataset_name:
     print(f"Downloaded dataset name:{server_dataset.name} id:{server_dataset.id} to: {extract_path}")
 elif base_dataset_url: 
     # download from remote URL
+    StorageManager.set_cache_file_limit(project.get("storage-cache-limit"))
     extract_path = StorageManager.get_local_copy(remote_url=base_dataset_url,
-                                                 name="base_dataset",
-                                                 cache_context="hd",
+                                                 name=dataset_name,
+                                                 extract_archive=True,
+                                                 cache_context=dataset_name,
                                                  force_download=True)    
     if extract_path is None:
         raise FileNotFoundError("404", f"Found not found at URL {base_dataset_url}")    

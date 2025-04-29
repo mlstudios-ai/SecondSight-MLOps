@@ -44,9 +44,11 @@ if not dataset_url:
     exit(0)
 
 # download zip dataset from remote url and extract to local disk
+StorageManager.set_cache_file_limit(project.get("storage-cache-limit"))
 dataset_path = StorageManager.get_local_copy(remote_url=dataset_url,
                                                 name=dataset_name,
-                                                cache_context="dataset",
+                                                extract_archive=True,
+                                                cache_context=dataset_name,
                                                 force_download=True)
 
 if dataset_path is None:
