@@ -18,7 +18,7 @@ from transformers import (
 )
 import evaluate
 from pycocoevalcap.cider.cider import Cider
-from pycocoevalcap.spice.spice import Spice
+#from pycocoevalcap.spice.spice import Spice
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -46,7 +46,7 @@ logging.info(f"Split JSONs located at: {splits_path}")
 img_ds = Dataset.get(dataset_project="Detection", dataset_name="base_dataset_zip", only_completed=True, alias="image_data")
 
 images_data = Dataset.get(
-    dataset_id= 'd8316762cb3844569f4c1fbe643ed7f4', #"2231b5b121924ed684d6560cf6839619",
+    dataset_id= '1201a0351b6442f1ba12245d5db779a1', #"2231b5b121924ed684d6560cf6839619",
     only_completed=True,
     alias="base_images"  
 )
@@ -68,7 +68,7 @@ if raw_path.is_file() and raw_path.suffix.lower() == ".zip":
 else:
     extract_path = raw_path
 
-# ─── AUTO-DETECT images/ AND labels/ ────────────────────────────────────────────
+# ─── AUTO-DETECT images
 def find_dir_with_most_files(root: Path, name: str) -> Path:
     """Search recursively for folders named `name` and return the one containing the most files."""
     best_dir = None
@@ -89,8 +89,8 @@ logging.info(f"Images located at: {IMAGE_ROOT}")
 STUDENT_CONFIG = {"encoder": "google/vit-base-patch16-224-in21k", "decoder": "distilgpt2"}
 TRAIN_BATCH_SIZE = 16
 EVAL_BATCH_SIZE = 16
-NUM_EPOCHS = 10
-LR = 5e-5
+NUM_EPOCHS = 2
+LR = 1e-4
 MAX_TARGET_LEN = 64
 BEAM_SIZE = 4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -182,7 +182,7 @@ val_ds   = CaptionDataset(VAL_CAPTIONS_JSON, IMAGE_ROOT, feature_extractor, toke
 bleu_metric  = evaluate.load("bleu")
 rouge_metric = evaluate.load("rouge")
 cider_scorer = Cider()
-spice_scorer = Spice()
+#spice_scorer = Spice()
 import numpy as np
 
 def compute_metrics(eval_pred):
@@ -211,14 +211,14 @@ def compute_metrics(eval_pred):
     refs_dict = {i: [decoded_labels[i]] for i in range(len(decoded_labels))}
     hyps_dict = {i: [decoded_preds[i]]  for i in range(len(decoded_preds))}
     cider_score, _ = cider_scorer.compute_score(refs_dict, hyps_dict)
-    spice_score, _ = spice_scorer.compute_score(refs_dict, hyps_dict)
+    #spice_score, _ = spice_scorer.compute_score(refs_dict, hyps_dict)
 
     return {
         "bleu":   bleu,
         "rouge1": rouge1,
         "rougeL": rougeL,
         "cider":  cider_score,
-        "spice":  spice_score,
+        #"spice":  spice_score,
     }
 
 # 9. TrainingArguments & Trainer
@@ -268,7 +268,7 @@ trainer = CleanSeq2SeqTrainer(
 )
 
 # 10. Train
-trainer.train()
+results = trainer.train()
 
 # 11. Plot loss curve and log to ClearML
 history = trainer.state.log_history
@@ -279,7 +279,7 @@ ax.plot(epochs, losses, marker='o')
 ax.set_xlabel('Epoch')
 ax.set_ylabel('Training Loss')
 ax.set_title('Loss Curve')
-logger.report_matplotlib("training_plot", "loss_curve", f)
+logger.report_plotly("training_plot", "loss_curve", f)
 
 # 12. Save best model and artifacts
 best_ckpt = trainer.state.best_model_checkpoint
@@ -291,6 +291,14 @@ best_model.save_pretrained(best_dir)
 tokenizer.save_pretrained(best_dir)
 feature_extractor.save_pretrained(best_dir)
 task.upload_artifact(name="best_model", artifact_object=best_dir)
+result_file = extract_path / "outputs" / "results.csv"
+task.upload_artifact(name="results", artifact_object=result_file)
+
+
+output_model = task.models.output[0] 
+task.set_parameter("output_model_project", "Description")
+task.set_parameter("output_model_id", output_model.id)
+task.set_parameter("output_model_name", output_model.name)
 
 # 13. Final evaluation on test set
 test_ds = CaptionDataset(TEST_CAPTIONS_JSON, IMAGE_ROOT, feature_extractor, tokenizer, MAX_TARGET_LEN)
@@ -300,3 +308,4 @@ for k, v in res.items():
     logging.info(f"Test {k}: {v}")
 
 logging.info("Student training on ClearML complete.")
+
