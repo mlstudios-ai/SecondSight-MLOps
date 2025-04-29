@@ -10,14 +10,13 @@ import yaml
 import tempfile
 from ultralytics import YOLO
 from enigmaai import util
-from enigmaai.config import Project, Config, ConfigFactory
+from enigmaai.config import Project, ConfigFactory
 
 """
 For hazard detection, accident prevention is paramount. To detect an obstacle is more important
 than the what type of object is the obstacle. Therefore, Recall performance metric will be 
 used over accuracty to evaluate the model. The newly trained (in draft) is compared to the current 
-live (published) model. If the Recall score is higher, the newly train model will be published for 
-inferencing.
+live (published) model. If the Recall score is higher, the newly train model return as the best model
 
 Other metrics, both from model training (such as latency) and outside (such is resource demands), 
 are not considered at this stage. 
@@ -31,7 +30,7 @@ project_name = project.get('project-name')
 
 task = Task.init(project_name=project_name, 
                 task_name="Model Evaluation", 
-                task_type=Task.TaskTypes.testing)
+                task_type=Task.TaskTypes.qc)
 
 """
 One of eval_dataset_id or eval_dataset_name must be provided to load evaluation dataset
@@ -40,7 +39,7 @@ params = {
     'eval_dataset_id': '',      # specific version of the dataset. if provided, ignore dataset_name
     'eval_dataset_name': '',    # latest registered dataset. used if dataset_id is empty
     'draft_model_id': '',       # the unpublished model to evaluate 
-    'pub_model_name': '',       # the published model name (also variant)
+    'pub_model_name': '',       # the published model name (also variant) for comparison
     'eval_args': ''             # string format of dictionary of hyperparameters for YOLO.val()
 }
 
@@ -148,12 +147,11 @@ else:
     task.upload_artifact(name=f"{pub_model_name}_draft_metrics", artifact_object=draft_metrics)
     task.upload_artifact(name=f"{pub_model_name}_pub_metrics", artifact_object=pub_metrics)
     
-# publish the best model
-if best_model.id == draft_model.id: # publish new model
-    best_model.publish()
-    print(f"Published new model name:{best_model.name} id:{best_model.id}")
+# check the best model
+if best_model.id == draft_model.id: 
+    print(f"Draft model is the best model name:{best_model.name} id:{best_model.id}")
 else: # new model not better, nothing to publish
-    print(f"Existing published model name:{best_model.name} id:{best_model.id} is already the best, nothing to publish.")
+    print(f"Existing published model is the best name:{best_model.name} id:{best_model.id}.")
 
 # show output    
 print("best_model_project:", project_name)
