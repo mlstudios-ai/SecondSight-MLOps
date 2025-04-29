@@ -133,6 +133,9 @@ elif model_name:    # get the latest from Model Registry, if not found, use defa
         print(f"Downloaded model name: {server_model.name} id:{server_model.id} to: {input_model_path}")        
     else:
         print (f"No registered model found with name '{model_name}'. Using {model_variant} base model from Ultralytics.")
+else:
+    # using Ultralytics model
+    print(f"Loading base model from Ultraplytics location '{input_model_path}'")
 
 # training input params: hyp + other data
 train_args = model_hyps.copy() # copy to prevent altering original by reference
