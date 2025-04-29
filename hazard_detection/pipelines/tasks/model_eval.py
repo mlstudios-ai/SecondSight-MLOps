@@ -86,6 +86,7 @@ if not server_models:
 else:    
     # best published model found
     pub_model = server_models[0] # get the most recent one
+    task.set_parameter("pub_model_id", pub_model.id)
     print(f"Found published model name:{pub_model.name} id:{pub_model.id}")  
 
     """

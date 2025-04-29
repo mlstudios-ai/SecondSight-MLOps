@@ -40,7 +40,7 @@ draft_model = Model(model_id=draft_model_id)
 print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
 
 # publish the model
-if not draft_model.published():
+if not draft_model.published:
     print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
     draft_model.publish()
     print(f"Draft model successfully published. New published model name:{draft_model.name} id:{draft_model.id}")

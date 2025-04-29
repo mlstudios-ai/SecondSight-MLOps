@@ -131,8 +131,9 @@ def load_hyp_config(model_variant) -> dict:
 # model training settings
 pipe.add_parameter("model_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore model_dataset_name")
 pipe.add_parameter("model_dataset_name", "dataset", "(Optional) dataset", "Used only if model_dataset_id is empty.")
-pipe.add_parameter("model_id", "", "(Optional) Pre-trained mode. If not provided, use default based on model_variant")
-pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant to train. Saved as model_name.")
+pipe.add_parameter("model_id", "", "(Optional) Pre-trained model from the server. If not provided, use default based on model_name")
+pipe.add_parameter("model_name", "", "(Optional) Latest pre-trained model from the server. If not provided, use default based on model_variant")
+pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant from Ultralytics. Also saved as model_name for future updates.")
 pipe.add_parameter("model_hyps", "", "Dictionary of YOLO.train() input params. Defaults from model variant config file")
 
 def pre_training_callback(pipeline, node, param_override) -> bool:  
@@ -171,7 +172,8 @@ pipe.add_step(
                 or pipe.get_parameters()["base_dataset_name"]
             else "${pipeline.model_dataset_id}"), # no output from previous step    
         "General/dataset_name": "${pipeline.model_dataset_name}", 
-        "General/model_id": "${pipeline.model_id}",     
+        "General/model_id": "${pipeline.model_id}",   
+        "General/model_name": "${pipeline.model_name}",       
         "General/model_variant": "${pipeline.model_variant}",
         "General/model_hyps": "${pipeline.model_hyps}"
     },
