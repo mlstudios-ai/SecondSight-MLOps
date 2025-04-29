@@ -45,6 +45,7 @@ STEP 1.1: Upload eval dataset
 
 # intial dataset to download. If none provided, task will complete without upload
 eval_dataset_url = project.get("eval-dataset-url")
+# eval_dataset_url = ""
 pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
 
 def pre_eval_upload_callback(pipeline, node, param_override) -> bool:    
@@ -70,6 +71,7 @@ STEP 1.2: Load base dataset
 
 # intial dataset to download. If none provided, task will complete without upload
 base_dataset_url = project.get("base-dataset-url")
+# base_dataset_url = ""
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
 
 def pre_base_upload_callback(pipeline, node, param_override) -> bool:    
@@ -95,8 +97,10 @@ STEP 2: Dataset processing
 
 # processing starting dataset for pipeline
 # it will get dataset_id from step 1, if not provided, this will be used
+base_dataset_name = "base_dataset"
+# base_dataset_name = ""
 pipe.add_parameter("base_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore base_dataset_name")
-pipe.add_parameter("base_dataset_name", "base_dataset", "(Optional) Used only if base_dataset_id is empty.")
+pipe.add_parameter("base_dataset_name", base_dataset_name, "(Optional) Used only if base_dataset_id is empty.")
 pipe.add_parameter("random_state", 42, "Specify random state for consistent training")
 pipe.add_parameter("val", 0.30, "Validation split. Percentage of entire dataset.")
 
@@ -245,6 +249,30 @@ pipe.add_step(
     },
     pre_execute_callback=pre_eval_callback,
     post_execute_callback=post_eval_callback
+)
+
+"""
+STEP 5: Model Publishing
+"""
+
+def pre_pub_callback(pipeline, node, param_override) -> bool:
+    print("Cloning model_publishing id={}".format(node.base_task_id))    
+    return True
+
+def post_pub_callback(pipeline, node) -> None:
+    print("Completed model_publishing id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_step(
+    name="model_publishing",
+    parents=["model_evaluation"],
+    base_task_project=project_name,
+    base_task_name="Model Publishing",
+    parameter_override={
+        "General/draft_model_id": "${model_evaluation.parameters.General/best_model_id}"
+    },
+    pre_execute_callback=pre_pub_callback,
+    post_execute_callback=post_pub_callback
 )
 
 remote_execution = project.get("pipeline-remote-execution")
