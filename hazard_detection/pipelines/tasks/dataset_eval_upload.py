@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 
 import shutil
 from clearml import Task, Dataset, StorageManager
-from enigmaai.config import Project, Config, ConfigFactory
+from enigmaai.config import Project, ConfigFactory
 
 """
 Upload zipped YOLO evaluation dataset file from remote URL, extract and upload to ClearML server. 

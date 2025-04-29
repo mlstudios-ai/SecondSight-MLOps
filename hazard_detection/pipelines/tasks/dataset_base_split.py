@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from clearml import Task, Dataset, StorageManager
-from enigmaai.config import Project, Config, ConfigFactory
+from enigmaai.config import Project, ConfigFactory
 
 def clean_dataset_file_stems(images_path, labels_path):
     """

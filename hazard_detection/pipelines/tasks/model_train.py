@@ -5,11 +5,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 from clearml import Task, Dataset, Model
 from pathlib import Path
 import yaml
-import shutil
 import tempfile
 from ultralytics import YOLO
 from enigmaai import util
-from enigmaai.config import Project, Config, ConfigFactory
+from enigmaai.config import Project, ConfigFactory
 
 """
 Train YOLOv11 model using the split dataset stored on ClearML server.
