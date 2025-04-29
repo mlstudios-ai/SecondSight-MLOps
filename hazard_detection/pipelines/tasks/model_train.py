@@ -11,8 +11,9 @@ from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
 
 """
-Train YOLOv11 model using the split dataset stored on ClearML server.
-The dataset needs to be in the following structure:
+Training YOLOV11 model from an existing model or from scratch using based model from 
+Ultralytics. Training uses the split dataset stored on ClearML server. The dataset needs 
+to be in the following structure:
 
 data.yaml
 train/images/*.jpg
@@ -28,8 +29,8 @@ Dataset.get_local_copy(). Caching keep tracks of changes in datdaset and only do
 there is a new version to prevent repeat downloads, especially with a large dataset.
 
 NOTE: this is for training only and will only use train and val dataset. A sepearate 
-test dataset on the server will be used for model evaluation task to compare and register 
-the best model for deployment.
+evaluation dataset on the server will be used for model evaluation task to compare and 
+register publish the best model for deployment.
 """
 
 # get project configurations
@@ -48,7 +49,8 @@ params = {
     'dataset_id': '',               # specific version of the dataset. if provided, ignore dataset_name
     'dataset_name': '',             # latest registered dataset. used if dataset_id is empty
     'model_id': '',                 # load specific version of the model 
-    'model_variant': '',            # base model variant from ultralytics. if model_id is empty, also used to load latest version
+    'model_name': '',               # latest train model version to continue training from, if model_id is empty
+    'model_variant': '',            # base model variant from ultralytics. if model_id and model_names are empty
     'model_hyps': ''                # string format of dictionary of hyperparameters for YOLO.train()
 }
 
@@ -60,8 +62,8 @@ print("model_train params=", task_params)
 dataset_id = task_params['General/dataset_id']
 dataset_name = task_params['General/dataset_name']
 model_id = task_params['General/model_id']
+model_name = task_params["General/model_name"]
 model_variant = task_params["General/model_variant"]
-model_name = model_variant
 model_hyps_str = task_params["General/model_hyps"]
         
 # validate task input params
@@ -115,7 +117,7 @@ print("YAML file created at: ", data_yaml_path)
 
 device_name = util.get_device_name()
 
-# default download from repo
+# default download from Ultralyics repo 
 input_model_path = project.get("base-model-url").format(model_variant)
 
 # select input model
