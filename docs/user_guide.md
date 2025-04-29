@@ -70,14 +70,14 @@ Depends on **Split Base Dataset**. This step can not be skipped and is the start
 To train the model:
 1. Set at lease ONE of the parameters `model_dataset_id` for specific dataset set or `model_dataset_name` for latest version of `dataset` used the model to train from
 2. Set at least ONE of the parameters `model_id` for a specific model, `model_name` for the latest version of the model. e.g. `yolo11n`, or `model_variant` for variant of the model to be downloaded from Ultralytics repository.
-3. Set `hyps` values as a string for hyperparameters of the model `YOLO.train()` method. This is a mandatory field.
+3. Set `hyps` values as a string for hyperparameters of the model `YOLO.train()` method. If not set, it will use the configs in the file `{model_variant}_hyps_config.yaml`.
 
 ##### *<u>STEP</u> 4: Model Evaluation* 
 Depends on **Model Training** and **Upload Evaluation Dataset**. This step evaluates the newly trained model against the published model using the evaluation dataset to evaluate both models.
 
 To evaluate the newly trained model from the previous step:
 1. Set at leaset ONE of the parameters `eval_dataset_id` specific `eval_dataset`, or `eval_dataset_name` for the latest version of `eval_dataset` 
-2. Set `eval_args` values as a string for input of the model `YOLO.val()` method. This is a mandatory field.
+2. Set `eval_args` values as a string for input of the model `YOLO.val()` method. If not set, it will use the configs in the file `{model_variant}_eval_config.yaml`.
 
 ##### *<u>STEP</u> 5: Model Publishing* 
 Depends on **Model Evaluation**. This published a model to the register. There are no parameters to be set in this step. The `draft_model_id` will be automatically set to the output of best model from the **Model Evaluation** step. If the best model is already published, this step will do nothing, otherwise it will be published to the register ready for serving.
