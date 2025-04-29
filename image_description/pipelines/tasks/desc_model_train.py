@@ -89,7 +89,7 @@ logging.info(f"Images located at: {IMAGE_ROOT}")
 STUDENT_CONFIG = {"encoder": "google/vit-base-patch16-224-in21k", "decoder": "distilgpt2"}
 TRAIN_BATCH_SIZE = 16
 EVAL_BATCH_SIZE = 16
-NUM_EPOCHS = 2
+NUM_EPOCHS = 5 
 LR = 1e-4
 MAX_TARGET_LEN = 64
 BEAM_SIZE = 4
@@ -222,7 +222,6 @@ def compute_metrics(eval_pred):
     }
 
 # 9. TrainingArguments & Trainer
-# --- 6. TrainingArguments & Trainer ---
 from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer
 # where to save checkpoints/logs locally
 OUTPUT_DIR = extract_path / "outputs" / "models"
@@ -279,7 +278,7 @@ ax.plot(epochs, losses, marker='o')
 ax.set_xlabel('Epoch')
 ax.set_ylabel('Training Loss')
 ax.set_title('Loss Curve')
-logger.report_plotly("training_plot", "loss_curve", f)
+logger.report_matplotlib_figure("training_plot", "loss_curve", f)
 
 # 12. Save best model and artifacts
 best_ckpt = trainer.state.best_model_checkpoint
