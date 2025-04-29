@@ -21,9 +21,12 @@ dataset upload to model publishing.
 ### MLOps Processes
 The following steps are used for an end-to-end pipeline in the **YOLOv11 Pipeline**.
 
-### 1. Start a ClearML Agent with a queue unique to your machine or worker. This is used for remote execution using your machine and only your machine
+### 1. Edit the `project_config.yaml` to set your project name and other settings
+### 2. Run the following to initiliase all the tasks:
+` python dataset_eval_upload.py; python dataset_base_upload.py; python dataset_base_split.py; python model_train.py; python model_eval.py; python model_publish.py `
+### 3. Start a ClearML Agent with a queue unique to your machine or worker. This is used for remote execution using your machine and only your machine
 
-### 2. Create a new run from **YOLOv11 Pipelinet** set the following parameters to configure the pipeline for desired operations.
+### 4. Create a new run from **YOLOv11 Pipelinet** set the following parameters to configure the pipeline for desired operations.
 
 ##### *<u>STEP</u> 1.1: Upload Base Dataset*
 
@@ -79,9 +82,9 @@ To evaluate the newly trained model from the previous step:
 ##### *<u>STEP</u> 5: Model Publishing* 
 Depends on **Model Evaluation**. This published a model to the register. There are no parameters to be set in this step. The `draft_model_id` will be automatically set to the output of best model from the **Model Evaluation** step. If the best model is already published, this step will do nothing, otherwise it will be published to the register ready for serving.
 
-### 3. Select your queue and hit RUN to execute the pipeline
+### 5. Select your queue and hit RUN to execute the pipeline
 
-### 4. Tag the new pipeline with a meaningful name
+### 6. Tag the new pipeline with a meaningful name
 
 
 
