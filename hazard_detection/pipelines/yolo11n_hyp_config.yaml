@@ -1,4 +1,4 @@
-    epochs: 5
+    epochs: 10
     imgsz: 640
     batch: 12
     lr0: 0.0006
