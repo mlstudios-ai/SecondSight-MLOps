@@ -7,7 +7,7 @@ import os
 from enigmaai.config import Project, ConfigFactory
 
 """
-Publis a specific draft model from the server. The model can be in Draft for Published state.
+Publish a specific draft model from the server. The model can be in Draft for Published state.
 If it is already in Published state, the model will not be published again. Refer to Model.publish() API.
 """
 
@@ -40,28 +40,22 @@ draft_model = Model(model_id=draft_model_id)
 print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
 
 # publish the model
-draft_model.publish()
-print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
-
-# verify model publication with the latest published model
-server_models = Model.query_models(model_name=draft_model.name, only_published=True)
-if not server_models: 
-    raise Exception(f"Error publishing draft model name:{draft_model.name} id:{draft_model.id}. Please check the logs.")  
-else:
-    pub_model = server_models[0]    
-    if pub_model.id != draft_model.id:
-        raise Exception(f"Error publishing draft model name:{draft_model.name} id:{draft_model.id}. Please check the logs.")  
-
-print(f"Draft model successfully published. New published model name:{pub_model.name} id:{pub_model.id}")
+if not draft_model.published():
+    print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
+    draft_model.publish()
+    print(f"Draft model successfully published. New published model name:{draft_model.name} id:{draft_model.id}")
+    print("Done")
+else: 
+    print(f"Model already published with name:{draft_model.name} id:{draft_model.id}")
 
 # show output    
 print("pub_model_project:", project_name)
-print("pub_model_id:", pub_model.id)
-print("pub_model_name:", pub_model.name)
-print("pub_model_variant:", pub_model.name)
+print("pub_model_id:", draft_model.id)
+print("pub_model_name:", draft_model.name)
+print("pub_model_variant:", draft_model.name)
 
 # task output info
 task.set_parameter("pub_model_project", project_name)
-task.set_parameter("pub_model_id", pub_model.id)
-task.set_parameter("pub_model_name", pub_model.name)
-task.set_parameter("pub_model_variant", pub_model.name)
+task.set_parameter("pub_model_id", draft_model.id)
+task.set_parameter("pub_model_name", draft_model.name)
+task.set_parameter("pub_model_variant", draft_model.name)
