@@ -7,7 +7,8 @@ import os
 from enigmaai.config import Project, ConfigFactory
 
 """
-Publis a specific draft model on the server.
+Publis a specific draft model from the server. The model can be in Draft for Published state.
+If it is already in Published state, the model will not be published again. Refer to Model.publish() API.
 """
 
 # get project configurations
@@ -40,16 +41,16 @@ print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
 
 # publish the model
 draft_model.publish()
-print(f"Publishing new model name:{draft_model.name} id:{draft_model.id}")
+print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
 
-# verify model publication
-server_models = Model.query_models(model_name=draft_model, only_published=True)
+# verify model publication with the latest published model
+server_models = Model.query_models(model_name=draft_model.name, only_published=True)
 if not server_models: 
     raise Exception(f"Error publishing draft model name:{draft_model.name} id:{draft_model.id}. Please check the logs.")  
-
-pub_model = server_models[0]    # get the latest publised model
-if pub_model.id != draft_model.id:
-    raise Exception(f"Error publishing draft model name:{draft_model.name} id:{draft_model.id}. Please check the logs.")  
+else:
+    pub_model = server_models[0]    
+    if pub_model.id != draft_model.id:
+        raise Exception(f"Error publishing draft model name:{draft_model.name} id:{draft_model.id}. Please check the logs.")  
 
 print(f"Draft model successfully published. New published model name:{pub_model.name} id:{pub_model.id}")
 
