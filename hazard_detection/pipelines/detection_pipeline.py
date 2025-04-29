@@ -49,33 +49,7 @@ pipe = PipelineController(name=pipeline_name,
 pipe.set_default_execution_queue("default")
 
 """ 
-STEP 1.1: Upload eval dataset
-"""
-
-# intial dataset to download. If none provided, task will complete without upload
-# eval_dataset_url = project.get("eval-dataset-url")
-eval_dataset_url = ""
-pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
-
-def pre_eval_upload_callback(pipeline, node, param_override) -> bool:    
-    print("Cloning upload_eval_dataset id={}".format(node.base_task_id))    
-    return True
-
-def post_eval_upload_callback(pipeline, node) -> None:   
-    print("Completed upload_eval_dataset id={} {}".format(node.base_task_id, node.executed))    
-    return
-
-pipe.add_step(
-    name="upload_eval_dataset",
-    base_task_project=project_name,
-    base_task_name="Upload Evaluation Dataset",
-    parameter_override={"General/dataset_url": "${pipeline.eval_dataset_url}"},
-    pre_execute_callback=pre_eval_upload_callback,
-    post_execute_callback=post_eval_upload_callback
-)
-
-""" 
-STEP 1.2: Load base dataset
+STEP 1.1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
@@ -203,6 +177,33 @@ pipe.add_step(
     },
     pre_execute_callback=pre_training_callback,
     post_execute_callback=post_training_callback
+)
+
+
+""" 
+STEP 1.2: Upload eval dataset
+"""
+
+# intial dataset to download. If none provided, task will complete without upload
+# eval_dataset_url = project.get("eval-dataset-url")
+eval_dataset_url = ""
+pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
+
+def pre_eval_upload_callback(pipeline, node, param_override) -> bool:    
+    print("Cloning upload_eval_dataset id={}".format(node.base_task_id))    
+    return True
+
+def post_eval_upload_callback(pipeline, node) -> None:   
+    print("Completed upload_eval_dataset id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_step(
+    name="upload_eval_dataset",
+    base_task_project=project_name,
+    base_task_name="Upload Evaluation Dataset",
+    parameter_override={"General/dataset_url": "${pipeline.eval_dataset_url}"},
+    pre_execute_callback=pre_eval_upload_callback,
+    post_execute_callback=post_eval_upload_callback
 )
 
 """
