@@ -23,20 +23,20 @@ The following steps are used for an end-to-end pipeline in the **YOLOv11 Pipelin
 
 ### 1. Edit the `project_config.yaml` to set your project name and other settings
 ### 2. Start a ClearML Agent for the tasks and pipeline
-- Run `clearml-agent daemon --queue "default" --detached` for CPU tasks
-- Run `clearml-agent daemon --queue "training" --detached` for GPU tasks
-- Run `clearml-agent daemon --queue "{my_queue_name}" --detached` for pipeline unique for your machine only
+1. Run `clearml-agent daemon --queue "default" --detached` for CPU tasks
+2. Run `clearml-agent daemon --queue "training" --detached` for GPU tasks
+3. Run `clearml-agent daemon --queue "{my_queue_name}" --detached` for pipeline unique for your machine only
 
 ### 3. Initialise all tasks:
-This could take a while.
-- Navigate to repo folder `hazard_detection/pipelines/tasks`.
-- Run ` python dataset_eval_upload.py; python dataset_base_upload.py; python dataset_base_split.py; python model_train.py; python model_eval.py; python model_publish.py `
+1. Navigate to repo folder `hazard_detection/pipelines/tasks`.
+2. Run ` python dataset_eval_upload.py; python dataset_base_upload.py; python dataset_base_split.py; python model_train.py; python model_eval.py; python model_publish.py `
 
 ### 4. Upload datasets using tasks on WebUI in STEP 1.1 Option 1 and STEP 1.2 Option 2.
 
 ### 5. Run the following to initialise the pipeline
-- Navigate to repo project folder (ie, EnigmaAI folder).
-- Run `hazard_detection/pipelines/detection_pipeline.py`
+This could take a while.
+1. Navigate to repo project folder (ie, EnigmaAI folder). It must be in the root project folder.
+2. Run `hazard_detection/pipelines/detection_pipeline.py`
 
 ### 6 Clone the **YOLOv11 Pipeline** for various purposes with the following settings
 
@@ -45,50 +45,55 @@ This could take a while.
 ###### Option 1 (Preferred): Upload via **Upload Base Dataset** task
 1. Clone the tasks and prefix with the agent name of your machine (any name will do as long as it is identifiable)
 2. Edit and set the `databset_url` value to your zip file location. This can be a URL (https://) or local file (file://{full_dataset_path})
-3. Right click on the cloned task and enqueue for execution. The upload should start
-4. Verify upload on dataset with name `base_dataset` on ClearML WebUI
+3. Edit and set the `output_dataset_name` value, defaults to `base_dataset`. This name is used to associate the dataset upload on the server.
+4. Right click on the cloned task and enqueue for execution. The upload should start
+5. Verify upload on dataset with the output name or the default `base_dataset` on ClearML WebUI
 
 ###### Option 2 : Upload via pipeline parameter (Optional)
 By default, base dataset is assume to be uploaded via a task. This step will compelete without upload if `base_dataset_url` is not set, hence, skipping the step. To skip, omit setting value for `base_dataset_url`.
 
-To upload evaluation dataset via the pipeline, follow these instructions:
+To upload base dataset via the pipeline, follow these instructions:
 1. Set the `base_dataset_url` value to your zip file location. This can be a URL (https://) or local file (file://{full_dataset_path}). 
-2. Click RUN to execute the pipeline NOTE: this will run the entire pipeline. Please enter all your desired parameter values before RUN.
+2. If `base_dataset_url` is set, the `base_dataset_name` must be set. This name is used to associate the dataset upload on the server. It is also used if `base_dataset_id` is not set in the  **Split Base Dataset** step to get the latest base dataset.
+
+##### *<u>STEP</u> 2: Split Base Dataset* (Optional)
+Depends on **Uploading Base Dataset**. This step need to be ran at least once to initialise the split dataset in the pipeline. After the first ru, the split dataset can be reused by omitting both of `base_dataset_id` and `base_dataset_name`. Without both parameters, the task will complete without execution, hence skipping the step. NOTE that `base_datset_id` will be overwritten if the **Split Base Dataset** task is executed with an output base dataset id.
+
+To split the base dataset for training, at lease set ONE of the following values:
+1. Set the `base_dataset_id` parameter to use a specific base dataset. If not set, it will get the latest from `base_dataset_name`. NOTE that if the base dataset is uploaded via pipeline, this step will be overwritting with the output of the previous task uplopad. 
+2. Set the `split_val` and `split_test` for validation and test split in percentages.
+3. If `base_dataset_id` is set, the `split_dataset_name` must be set. This name is used to associate the dataset upload on the server. It is also used if `base_dataset_id` is not set in the **Model Training** step to get the latest split dataset.
+
+##### *<u>STEP</u> 3: Model Training* 
+Depends on **Split Base Dataset**. This step can not be skipped and is the starting point of the default setting for the pipeline. 
+
+To train the model:
+1. Set at least ONE of the parameters `model_dataset_id` for specific dataset set or `split_dataset_name` for latest version of `dataset` used the model to train from
+2. Set at least ONE of the parameters `model_id` for a specific model, `model_name` for the latest version of the model. e.g. `yolo11n`, or `model_variant` for variant of the model to be downloaded from Ultralytics repository.
+3. Set `hyps` values as a string for hyperparameters of the model `YOLO.train()` method. If not set, it will use the configs in the file `{model_variant}_hyps_config.yaml`.
+
 
 ##### *<u>STEP</u> 1.2: Upload Evaluation Dataset*
 
 ###### Option 1 (Preferred): Upload via **Upload Evaluation Dataset** task
 1. Clone the tasks and prefix with the agent name of your machine (any name will do as long as it is identifiable)
 2. Edit and set the `eval_databset_url` value to your zip file location. This can be a URL (https://) or local file (file://{full_dataset_path})
-3. Right click on the cloned task and enqueue for execution. The upload should start
-4. Verify upload on dataset with name `eval_dataset` on ClearML WebUI
+3. Edit and set the `output_dataset_name` value, defaults to `eval_dataset`. This is name is used to associate the dataset upload on the server.
+4. Right click on the cloned task and enqueue for execution. The upload should start
+5. Verify upload on dataset with the output name or the default `eval_dataset` on ClearML WebUI
 
 ###### Option 2 : Upload via pipeline parameter (Optional)
 By default, eval dataset is assume to be uploaded via a task. This step will compelete without upload if `eval_dataset_url` is not set, hence, skipping the step. To skip, omit setting value for `eval_dataset_url`.
 
 To upload evaluation dataset via the pipeline, follow these instructions:
-1. Set the `eval_dataset_url` value to your zip file location. This can be a URL (https://) or local file (file://{full_dataset_path}). 
-
-##### *<u>STEP</u> 2: Split Base Dataset* (Optional)
-Depends on **Uploading Base Dataset**. This step need to be ran at least once to initialise the split dataset in the pipeline. After the first ru, the split dataset can be reused by omitting both of `base_dataset_id` and `base_dataset_name`. Without both parameters, the task will complete without execution, hence skipping the step.
-
-To split the base dataset for training, at lease set ONE of the following values:
-1. NOTE that if the base dataset is uploaded via pipeline, this step will be overwritting with the output of the previous task uplopad. If previous step is skipped, set the `base_dataset_id` parameter to use a specific base dataset. This takes priority over `base_dataset_name`.
-2. Set the `base_dataset_name` to use the lastest version of the `base_dataset`. This will only be used if the previous upload tasks is skipped and `base_dataset_id` is not set.
-
-##### *<u>STEP</u> 3: Model Training* 
-Depends on **Split Base Dataset**. This step can not be skipped and is the starting point of the default setting for the pipeline. 
-
-To train the model:
-1. Set at lease ONE of the parameters `model_dataset_id` for specific dataset set or `model_dataset_name` for latest version of `dataset` used the model to train from
-2. Set at least ONE of the parameters `model_id` for a specific model, `model_name` for the latest version of the model. e.g. `yolo11n`, or `model_variant` for variant of the model to be downloaded from Ultralytics repository.
-3. Set `hyps` values as a string for hyperparameters of the model `YOLO.train()` method. If not set, it will use the configs in the file `{model_variant}_hyps_config.yaml`.
+1. Set the `eval_dataset_url` value to your zip file location. This can be a URL (https://) or local file (file://{full_dataset_path}).  
+2. If `eval_dataset_url` is set, the `eval_dataset_name` must be set. Default is `eval_dataset`. This name is used to associate the dataset upload on the server. It is also used if `eval_dataset_id` is not set in the **Model Evaluation** step to get the latest evaluation dataset.
 
 ##### *<u>STEP</u> 4: Model Evaluation* 
 Depends on **Model Training** and **Upload Evaluation Dataset**. This step evaluates the newly trained model against the published model using the evaluation dataset to evaluate both models.
 
 To evaluate the newly trained model from the previous step:
-1. Set at leaset ONE of the parameters `eval_dataset_id` specific `eval_dataset`, or `eval_dataset_name` for the latest version of `eval_dataset` 
+1. Set at leaset ONE of the parameters `eval_dataset_id` specific dataset, or `eval_dataset_name` for the latest version of dataset, defaults `eval_dataset` 
 2. Set `eval_args` values as a string for input of the model `YOLO.val()` method. If not set, it will use the configs in the file `{model_variant}_eval_config.yaml`.
 
 ##### *<u>STEP</u> 5: Model Publishing* 
