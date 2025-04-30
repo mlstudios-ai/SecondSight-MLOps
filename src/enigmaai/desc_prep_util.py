@@ -1,75 +1,7 @@
-from clearml import Task, Dataset, Model
 import json
 import logging
 from typing import List, Optional, Dict, Any
 from pathlib import Path
-"""
-Map the images from latest  dataset stored on ClearML server to their corresponding annotation/labels files.
-Each annotation file (stored in a separate labels folder) may contain one or more lines,
-each with the following format:
-    <class_label> <val1> <val2> <val3> <val4>
-For example:
-    0 0.705242 0.791633 0.058828 0.075641
-    0 0.445586 0.652133 0.097484 0.156297
-If a label file is empty (i.e. no lines are present), this script will instead assign a
-default annotation indicating no objects detected. In that case, the default annotation is:
-    "class_label": [5], "additional_values": []
-The final output is a JSON file mapping each image filename to a list of annotation dictionaries.
-THe dataset has the following structure:
-data.yaml
-"""
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-project_name="Description"
-task = Task.init(project_name=project_name, 
-                task_name="step1_desc_data_preparation",
-                task_type=Task.TaskTypes.data_processing)
-
-params = {
-    'dataset_id': '2231b5b121924ed684d6560cf6839619',                # specific version of the dataset
-    'dataset_name': 'base_dataset'               # latest registered dataset
-}
-
-# logger = task.get_logger()
-task.connect(params)
-task.execute_remotely(queue_name="desc_preparation")
-
-dataset_id = params['dataset_id']
-dataset_name = params['dataset_name']
-
-# validate task input params
-if not dataset_id and not dataset_name:
-    task.mark_completed(status_message="No dataset provided. Nothing to train on.")
-    exit(0)
-if dataset_id: 
-    # download the latest registered dataset
-    server_dataset = Dataset.get(dataset_id=dataset_id, only_completed=True, alias="base_dataset")
-elif dataset_name: 
-    # download the latest registered dataset
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project="Detection", only_completed=True, alias="base_dataset")
-
-extract_path = server_dataset.get_local_copy()          
-print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
-"""
-Prepare dataset.
-"""
-extract_path = Path(extract_path)
-# get image file prefix that has corresponding labels
-images_dir = extract_path / "images"
-labels_dir = extract_path / "labels"
-
-# build a Path to the JSON file under a subfolder "Desc_Dataset"
-out_dir  = extract_path / project_name / "Desc_Dataset"
-out_file = out_dir / "desc_prep_dataset.json"
-# ensure the output directory exists
-out_dir.mkdir(parents=True, exist_ok=True)
-
-# if an old JSON exists, delete it
-if out_file.exists():
-    logging.info(f"Removing old mapping at {out_file}")
-    out_file.unlink()
-
 
 def parse_label_file(label_file_path: str) -> Optional[List[Dict[str, Any]]]:
     """
@@ -147,16 +79,15 @@ def create_mapping(images_dir: str, labels_dir: str, output_file: str) -> None:
     except Exception as e:
         logging.error(f"Error writing JSON mapping to {output_file}: {e}") 
 
-create_mapping(images_dir, labels_dir, out_file)
-# upload prepared dataset to ClearML server
-dataset = Dataset.create(
-    dataset_project=project_name, dataset_name="Desc_Dataset"
-)
-dataset.add_files(path=str(out_file))
-print('Uploading dataset in the background')
-dataset.upload()
-dataset.finalize()
-
-task.set_parameter("output_dataset_project", dataset.project)
-task.set_parameter("output_dataset_id", dataset.id)
-task.set_parameter("output_dataset_name", dataset.name)
+def find_dir_with_files(root: Path, name: str) -> Path:
+    """Search recursively for folders named `name` and return the one containing the most files."""
+    best_dir = None
+    best_count = 0
+    for candidate in root.rglob(name):
+        if candidate.is_dir():
+            cnt = sum(1 for _ in candidate.iterdir() if _.is_file())
+            if cnt > best_count:
+                best_dir, best_count = candidate, cnt
+    if not best_dir:
+        raise FileNotFoundError(f"No directory named '{name}' found under {root}")
+    return best_dir
