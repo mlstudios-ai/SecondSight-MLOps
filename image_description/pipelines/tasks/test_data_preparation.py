@@ -22,7 +22,7 @@ data.yaml
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 project_name="Description"
 task = Task.init(project_name=project_name, 
-                task_name="step1_desc_data_preparation",
+                task_name="step2_desc_testdata_preparation",
                 task_type=Task.TaskTypes.data_processing)
 
 params = {
