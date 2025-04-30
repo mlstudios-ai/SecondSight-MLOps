@@ -102,15 +102,23 @@ else:
 
     dataset_path = server_dataset.get_local_copy()
     
-    # contruct YAML config file
-    data_yaml_path = working_dir / 'data.yaml'
-    classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
-    with open(data_yaml_path, 'w') as f: 
-        f.write(f"train: {dataset_path}/images\n")   # Not used
-        f.write(f"val: {dataset_path}/images\n")     # Not used
-        f.write(f"test: {dataset_path}/images\n")    # Used
-        f.write(f"nc: {len(classes)}\n")
-        f.write(f"names: {classes}\n")
+    # check if data.yaml exist
+    source_data_yaml = dataset_path / 'data.yaml'   # use original yaml, only modify paths
+    if not source_data_yaml.exists():
+        raise FileNotFoundError(f"{source_data_yaml} does not exist.")
+
+    # modify the paths and save to new dataset
+    with open(source_data_yaml, "r") as file:
+        # load existing yaml data
+        data_yaml = yaml.safe_load(file)
+        data_yaml["train"] = f"{dataset_path}/images"   # NOT used
+        data_yaml["val"] = f"{dataset_path}/images"     # NOT used
+        data_yaml["test"] = f"{dataset_path}/images"    # USED!
+        
+        # new yaml with the right paths  
+        data_yaml_path = working_dir / 'data.yaml'        
+        with open(data_yaml_path, "w") as file:
+            yaml.dump(data_yaml, file, default_flow_style=False)
         
     print("YAML file created at: ", data_yaml_path)
     

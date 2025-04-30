@@ -27,7 +27,8 @@ task = Task.init(project_name=project_name,
                 reuse_last_task_id=True)
 
 params = {
-    'dataset_url': ''    
+    'dataset_url': '',                      # url of a zip file to download from
+    'output_dataset_name': 'eval_dataset',    # name for output dataset to upload
 }
 
 task.connect(params)
@@ -35,13 +36,17 @@ task.execute_remotely(queue_name="default")
 task_params = task.get_parameters()
 print("dataset_eval_upload params=", task_params)
 
-dataset_name = "eval_dataset"
+dataset_name = task_params['General/output_dataset_name']
 dataset_url = task_params['General/dataset_url']
 
 # validate task input params
 if not dataset_url:
     task.mark_completed(status_message="No dataset URL provided. Nothing to upload.")
     exit(0)
+    
+# Mandatory input param if dataset_url is not empty
+if not dataset_name:
+    raise ValueError("Missing a dataset name to upload to. Please provide output_dataset_name.")
 
 # download zip dataset from remote url and extract to local disk
 StorageManager.set_cache_file_limit(project.get("storage-cache-limit"))

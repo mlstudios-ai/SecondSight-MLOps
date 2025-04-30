@@ -4,6 +4,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 
 import shutil
 from pathlib import Path
+import tempfile
+import yaml
 from sklearn.model_selection import train_test_split
 from clearml import Task, Dataset, StorageManager
 from enigmaai.config import Project, ConfigFactory
@@ -63,12 +65,13 @@ One of base_dataset_id, base_dataset_name, or base_dataset_url must be provided 
 It will take the paramater in the order of the param list.
 """
 params = {
-    'base_dataset_id': '',
-    'base_dataset_name': '',
-    'base_dataset_url': '',
-    'random_state': 42,
-    'val_size': 0.3,
-    'test_size': 0.0,
+    'base_dataset_id': '',              # id of the dataset to split
+    'base_dataset_name': '',            # latest version of the dataset to split
+    'base_dataset_url': '',             # remote url dataset to download and split
+    'output_dataset_name': 'dataset',   # name for uploading the output dataset
+    'random_state': 42,                 # random seed for reproducibility
+    'val_size': 0.3,                    # percentage of validation set
+    'test_size': 0.0,                   # percentage of the test set
 }
 
 task.connect(params)
@@ -76,15 +79,23 @@ task.execute_remotely(queue_name="default")
 task_params = task.get_parameters()
 print("dataset_base_split params=", task_params)
 
-dataset_name = "dataset" # name for uploading the output dataset
 base_dataset_id = task_params['General/base_dataset_id']
 base_dataset_name = task_params['General/base_dataset_name']
 base_dataset_url = task_params['General/base_dataset_url']
+dataset_name = task_params['General/output_dataset_name']
+random_state = int(task_params['General/random_state'])
+val_size = float(task_params['General/val_size'])
+test_size = float(task_params['General/test_size'])
+
 
 # validate task input params
 if not base_dataset_id and not base_dataset_name and not base_dataset_url:
     task.mark_completed(status_message="No dataset provided. Nothing to process.")
     exit(0)
+    
+# Mandatory input param if dataset_url is not empty
+if not dataset_name:
+    raise ValueError("Missing a dataset name to upload to. Please provide output_dataset_name.")
 
 if base_dataset_id: 
     # download the specific dataset from ClearML Server   
@@ -120,11 +131,6 @@ Split dataset to train, val, test
 clean_file_stems = clean_dataset_file_stems(extract_path / "images", extract_path / "labels")
 print("clean_file_stems:", len(clean_file_stems))
 
-# split sizes
-val_size = float(task_params['General/val_size'])
-test_size = float(task_params['General/test_size'])
-random_state = int(task_params['General/random_state'])
-
 # split train, val, test sets according task params
 train_stems, val_stems = train_test_split(clean_file_stems, 
                                          test_size = val_size + test_size, 
@@ -141,15 +147,13 @@ else:
 Move files to train, val, test folders
 """
 
-# base destination path for split dataset
-dest_path = Path(extract_path / dataset_name)
-if os.path.exists(dest_path): 
-        shutil.rmtree(dest_path) # remove old data
-        
-os.makedirs(dest_path)
+# use temp directory for output
+working_dir = Path(tempfile.mkdtemp()) / project_name
+working_dir.mkdir(parents=True, exist_ok=True)    
+print("Working temp directory at:", working_dir)
 
 # train set
-train_path = dest_path / "train"
+train_path = working_dir / "train"
 train_images = train_path / "images"
 os.makedirs(train_images, exist_ok=True)
 train_labels = train_path / "labels"
@@ -162,7 +166,7 @@ for stem in train_stems:
     shutil.move(extract_path / f"labels/{label}", train_labels / label)
      
 # validation set
-val_path = dest_path / "val"
+val_path = working_dir / "val"
 val_images = val_path / "images"
 os.makedirs(val_images, exist_ok=True)
 val_labels = val_path / "labels"
@@ -175,7 +179,7 @@ for stem in val_stems:
     shutil.move(extract_path / f"labels/{label}", val_labels / label)
 
 # test set
-test_path = dest_path / "test"
+test_path = working_dir / "test"
 test_images = test_path / "images"
 os.makedirs(test_images, exist_ok=True)
 test_labels = test_path / "labels"
@@ -187,22 +191,30 @@ for stem in test_stems:
     shutil.move(extract_path / f"images/{image}", test_images / image)
     shutil.move(extract_path / f"labels/{label}", test_labels / label)
 
-# contruct YAML config file
-data_yaml_path = dest_path / 'data.yaml'
-classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
-with open(data_yaml_path, 'w') as f:
-    f.write(f"train: ./{train_path.name}/images\n")
-    f.write(f"val: ./{val_path.name}/images\n")
-    f.write(f"test: ./{test_path.name}/images\n")  
-    f.write(f"nc: {len(classes)}\n")
-    f.write(f"names: {classes}\n")
+# check if data.yaml exist
+source_data_yaml = extract_path / 'data.yaml'   # use original yaml, only modify paths
+if not source_data_yaml.exists():
+    raise FileNotFoundError(f"{source_data_yaml} does not exist.")
 
+# modify the paths and save to new dataset
+with open(source_data_yaml, "r") as file:
+    # load existing yaml data
+    data_yaml = yaml.safe_load(file)
+    data_yaml["train"] = f"./{train_path.name}/images"
+    data_yaml["val"] = f"./{val_path.name}/images"
+    data_yaml["test"] = f"./{test_path.name}/images"
+    
+    # new yaml with the right paths  
+    data_yaml_path = working_dir / 'data.yaml'        
+    with open(data_yaml_path, "w") as file:
+        yaml.dump(data_yaml, file, default_flow_style=False)
+    
 # upload dataset to ClearML server
 dataset = Dataset.create(
     dataset_project=project_name, dataset_name=dataset_name
 )
 
-dataset.add_files(path=dest_path)
+dataset.add_files(path=working_dir)
 
 print('Uploading dataset in the background')
 
@@ -210,10 +222,10 @@ dataset.upload()
 dataset.finalize()
 
 task.flush()
-if os.path.exists(dest_path): 
+if os.path.exists(working_dir): 
         # NOTE: only split dataset on disk is removed, 
         # the original download is part of the cache, hence stays
-        shutil.rmtree(dest_path) # clean up
+        shutil.rmtree(working_dir) # clean up
         
 print('Done')
 print("output_dataset_project", dataset.project)

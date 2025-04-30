@@ -103,15 +103,23 @@ working_dir = Path(tempfile.mkdtemp()) / project_name
 working_dir.mkdir(parents=True, exist_ok=True)    
 print("Working temp directory at:", working_dir)
 
-# contruct YAML config file
-data_yaml_path = working_dir / 'data.yaml'
-classes = ['hole', 'pole', 'stairs', 'bottle', 'rock']
-with open(data_yaml_path, 'w') as f:
-    f.write(f"train: {extract_path}/train/images\n")
-    f.write(f"val: {extract_path}/val/images\n")
-    f.write(f"test: {extract_path}/test/images\n")  
-    f.write(f"nc: {len(classes)}\n")
-    f.write(f"names: {classes}\n")
+# check if data.yaml exist
+source_data_yaml = extract_path / 'data.yaml'   # use original yaml, only modify paths
+if not source_data_yaml.exists():
+    raise FileNotFoundError(f"{source_data_yaml} does not exist.")
+
+# modify the paths and save to new dataset
+with open(source_data_yaml, "r") as file:
+    # load existing yaml data
+    data_yaml = yaml.safe_load(file)
+    data_yaml["train"] = f"{extract_path}/train/images"
+    data_yaml["val"] = f"{extract_path}/val/images"
+    data_yaml["test"] = f"{extract_path}/test/images"
+    
+    # new yaml with the right paths  
+    data_yaml_path = working_dir / 'data.yaml'        
+    with open(data_yaml_path, "w") as file:
+        yaml.dump(data_yaml, file, default_flow_style=False)
     
 print("YAML file created at: ", data_yaml_path)
 
