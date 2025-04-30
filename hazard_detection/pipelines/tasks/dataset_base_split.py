@@ -192,7 +192,7 @@ for stem in test_stems:
     shutil.move(extract_path / f"labels/{label}", test_labels / label)
 
 # check if data.yaml exist
-source_data_yaml = extract_path / 'data.yaml'   # use original yaml, only modify paths
+source_data_yaml = Path(extract_path) / 'data.yaml'   # use original yaml, only modify paths
 if not source_data_yaml.exists():
     raise FileNotFoundError(f"{source_data_yaml} does not exist.")
 

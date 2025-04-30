@@ -104,7 +104,7 @@ working_dir.mkdir(parents=True, exist_ok=True)
 print("Working temp directory at:", working_dir)
 
 # check if data.yaml exist
-source_data_yaml = extract_path / 'data.yaml'   # use original yaml, only modify paths
+source_data_yaml = Path(extract_path) / 'data.yaml'   # use original yaml, only modify paths
 if not source_data_yaml.exists():
     raise FileNotFoundError(f"{source_data_yaml} does not exist.")
 

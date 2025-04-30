@@ -103,7 +103,7 @@ else:
     dataset_path = server_dataset.get_local_copy()
     
     # check if data.yaml exist
-    source_data_yaml = dataset_path / 'data.yaml'   # use original yaml, only modify paths
+    source_data_yaml = Path(dataset_path) / 'data.yaml'   # use original yaml, only modify paths
     if not source_data_yaml.exists():
         raise FileNotFoundError(f"{source_data_yaml} does not exist.")
 

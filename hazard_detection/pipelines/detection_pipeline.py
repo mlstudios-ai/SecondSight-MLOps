@@ -53,10 +53,10 @@ STEP 1.1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-# base_dataset_url = project.get("base-dataset-url")
-base_dataset_url = ""
-# base_dataset_name = "base_dataset"
-base_dataset_name = ""
+base_dataset_url = project.get("base-dataset-url")
+# base_dataset_url = ""
+base_dataset_name = "base_dataset"
+# base_dataset_name = ""
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
 pipe.add_parameter("base_dataset_name", base_dataset_name, "Name of the dataset to upload to the server. Also used for the next step.")
 
@@ -191,8 +191,8 @@ STEP 1.2: Upload eval dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-# eval_dataset_url = project.get("eval-dataset-url")
-eval_dataset_url = ""
+eval_dataset_url = project.get("eval-dataset-url")
+# eval_dataset_url = ""
 pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
 pipe.add_parameter("eval_dataset_name", "eval_dataset", "Name of the dataset to upload to the server. Also used for the next step.")
 
