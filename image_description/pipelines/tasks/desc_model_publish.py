@@ -13,7 +13,7 @@ If it is already in Published state, the model will not be published again. Refe
 project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
 project_name = project.get('project-name')
 task = Task.init(project_name=project_name, 
-                task_name="Model Publishing", 
+                task_name="step6_desc_model_publish", 
                 task_type=Task.TaskTypes.qc)
 
 params = {

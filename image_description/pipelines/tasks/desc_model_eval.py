@@ -32,7 +32,7 @@ print("Working temp directory at:", working_dir)
 
 # Initialize clearl task
 task = Task.init(project_name=project_name, 
-                task_name="Model Evaluation", 
+                task_name="step5_desc_model_evaluation", 
                 task_type=Task.TaskTypes.qc)
 params = {
     'desc_draft_model_id': '96f429eb382f44b1a08a78e168c7bf3b',       # the unpublished model to evaluate 
@@ -200,11 +200,11 @@ def run_eval(split_name, captions_json, model, feature_extractor, tokenizer):
 Evaluation and comparison between draft and published best model
 """
 # evaluate the draft model    
-draft_model, draft_feature_extractor, draft_tokenizer = load_model(draft_model_path)
-draft_metrics = run_eval("Test", TEST_CAPTIONS_JSON, draft_model, draft_feature_extractor, draft_tokenizer)
+draft_model_hf, draft_feature_extractor, draft_tokenizer = load_model(draft_model_path)
+draft_metrics = run_eval("Test", TEST_CAPTIONS_JSON, draft_model_hf, draft_feature_extractor, draft_tokenizer)
 # evaluate the published best model
-pub_model, pub_feature_extractor, pub_tokenizer = load_model(pub_model_path)
-pub_metrics = run_eval("Test", TEST_CAPTIONS_JSON, pub_model, pub_feature_extractor, pub_tokenizer)    
+pub_model_hf, pub_feature_extractor, pub_tokenizer = load_model(pub_model_path)
+pub_metrics = run_eval("Test", TEST_CAPTIONS_JSON, pub_model_hf, pub_feature_extractor, pub_tokenizer)    
 # show metrics for comparision
 print("keys=", draft_metrics.keys)
 print("draft_metrics=", draft_metrics)
