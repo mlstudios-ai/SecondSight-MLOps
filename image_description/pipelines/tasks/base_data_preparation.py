@@ -1,7 +1,7 @@
 from clearml import Task, Dataset, Model
 import logging, zipfile
 from pathlib import Path
-from src.enigmaai.desc_prep_util import create_mapping, find_dir_with_files
+from enigmaai.desc_prep_util import create_mapping, find_dir_with_files
 """
 Map the images from latest  dataset stored on ClearML server to their corresponding annotation/labels files.
 Each annotation file (stored in a separate labels folder) may contain one or more lines,
