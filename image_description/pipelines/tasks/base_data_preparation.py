@@ -1,6 +1,9 @@
 from clearml import Task, Dataset, Model
 import logging, zipfile
+import os, sys
 from pathlib import Path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
+from enigmaai.config import Project, ConfigFactory
 from enigmaai.desc_prep_util import create_mapping, find_dir_with_files
 """
 Map the images from latest  dataset stored on ClearML server to their corresponding annotation/labels files.
@@ -20,7 +23,10 @@ data.yaml
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-project_name="Description"
+# get project configurations
+project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
+project_name = project.get('project-name')
+
 task = Task.init(project_name=project_name, 
                 task_name="step1_desc_basedata_preparation",
                 task_type=Task.TaskTypes.data_processing)
@@ -29,7 +35,7 @@ params = {
     'base_dataset_name': 'base_dataset_zip',               # latest registered dataset
 }
 
-# logger = task.get_logger()
+logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
 

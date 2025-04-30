@@ -1,7 +1,10 @@
 from clearml import Task, Dataset, Model
 import logging, zipfile
 from pathlib import Path
-from src.enigmaai.desc_prep_util import create_mapping, find_dir_with_files
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
+from enigmaai.config import Project, ConfigFactory
+from enigmaai.desc_prep_util import create_mapping, find_dir_with_files
 """
 Map the images from latest  dataset stored on ClearML server to their corresponding annotation/labels files.
 Each annotation file (stored in a separate labels folder) may contain one or more lines,
@@ -20,7 +23,9 @@ data.yaml
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-project_name="Description"
+# get project configurations
+project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
+project_name = project.get('project-name')
 task = Task.init(project_name=project_name, 
                 task_name="step2_desc_testdata_preparation",
                 task_type=Task.TaskTypes.data_processing)
