@@ -1,4 +1,4 @@
-from clearml import Task, Dataset
+from clearml import Task, Dataset, OutputModel
 Task.add_requirements("requirements.txt")
 import os
 import json
@@ -6,6 +6,7 @@ import logging
 import zipfile
 from pathlib import Path
 import torch
+import shutil
 from PIL import Image
 from transformers import (
     VisionEncoderDecoderModel,
@@ -105,7 +106,7 @@ Student model training configuration and set up
 STUDENT_CONFIG = {"encoder": "google/vit-base-patch16-224-in21k", "decoder": "distilgpt2"}
 TRAIN_BATCH_SIZE = 16
 EVAL_BATCH_SIZE = 16
-NUM_EPOCHS = 2 
+NUM_EPOCHS = 1 
 LR = 1e-4
 MAX_TARGET_LEN = 64
 BEAM_SIZE = 4
@@ -310,16 +311,22 @@ task.upload_artifact(name="best_model", artifact_object=best_dir)
 result_file = working_dir / "outputs" / "results.csv"
 task.upload_artifact(name="results", artifact_object=result_file)
 
-# Register it as the “Output Model”
-logger.report_model(
-    title="student_desc_model",      
-    model_path=str(best_dir),          
-    model_framework="pytorch",    
-    labels=["cider_best"]  # any tags you want
+# Zip entire folder
+#zip_path = best_dir.with_suffix(".zip")                   # e.g. best_model_export.zip
+#shutil.make_archive(base_name=str(best_dir), format="zip", root_dir=str(best_dir))
+
+# Register it as an OutputModel
+task = Task.current_task()
+output_model = OutputModel(
+    task=task,
+    name="student_desc_model",    
+    framework="pytorch"
 )
+# Upload the ZIP as the model weights
+output_model.update_weights(weights_filename=str(zip_path))
+print("Registered model id:", output_model.id)
 #output_model = task.models.output[0] 
 #task.set_parameter("output_model_project", project_name)
 #task.set_parameter("output_model_id", output_model.id)
 #task.set_parameter("output_model_name", output_model.name)
-
 logging.info("Student training on ClearML complete.")

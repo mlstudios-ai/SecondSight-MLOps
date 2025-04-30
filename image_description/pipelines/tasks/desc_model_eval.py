@@ -1,7 +1,8 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 from clearml import Task, Dataset, Model
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
+Task.add_requirements("requirements.txt")
 from pathlib import Path
 import logging
 import torch
@@ -31,7 +32,7 @@ task = Task.init(project_name=project_name,
                 task_name="Model Evaluation", 
                 task_type=Task.TaskTypes.qc)
 params = {
-    'desc_draft_model_id': '',       # the unpublished model to evaluate 
+    'desc_draft_model_id': '96f429eb382f44b1a08a78e168c7bf3b',       # the unpublished model to evaluate 
     'desc_pub_model_name': '',       # the published model name (also variant) for comparison
 }
 task.connect(params)
@@ -105,8 +106,8 @@ if not TEST_CAPTIONS_JSON:
 if not draft_model_id:
     raise ValueError("Missing new/draft model. Please provide draft_model_id.")
 # Mandatory input param
-if not pub_model_name:
-    raise ValueError("Missing model. Please provide pub_model_name.")
+#if not pub_model_name:
+    #raise ValueError("Missing model. Please provide pub_model_name.")
 
 # fetch the draft model path for evaluation    
 draft_model = Model(model_id=draft_model_id)    
@@ -130,9 +131,13 @@ else:
     print(f"Downloaded published model name: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")
   
 def load_model(model_path):
-    model = VisionEncoderDecoderModel.from_pretrained(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    feature_extractor = ViTFeatureExtractor.from_pretrained(model_path)
+    tmp_dir = Path(tempfile.mkdtemp())
+    # Unzip all files there
+    with zipfile.ZipFile(model_path, 'r') as zf:
+        zf.extractall(tmp_dir)
+    model = VisionEncoderDecoderModel.from_pretrained(tmp_dir)
+    tokenizer = AutoTokenizer.from_pretrained(tmp_dir)
+    feature_extractor = ViTFeatureExtractor.from_pretrained(tmp_dir)
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     model.decoder.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id            = tokenizer.pad_token_id

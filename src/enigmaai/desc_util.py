@@ -1,3 +1,6 @@
+import torch
+from torch.nn.utils.rnn import pad_sequence
+from transformers.models.bart.modeling_bart import shift_tokens_right
 from torch.utils.data import Dataset
 import json
 import numpy as np
@@ -6,9 +9,7 @@ from PIL import Image
 import evaluate
 from pycocoevalcap.cider.cider import Cider
 #from pycocoevalcap.spice.spice import Spice
-import torch
-from torch.nn.utils.rnn import pad_sequence
-from transformers.models.bart.modeling_bart import shift_tokens_right
+
 
 class CaptionDataset(Dataset):
     def __init__(self, captions_json, image_root, feature_extractor, tokenizer, max_len):
