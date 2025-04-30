@@ -1,0 +1,26 @@
+# ---------------------------
+# Please use this file to configure variables for different environments
+# such as dev, staging, prod etc
+# ---------------------------
+
+# The name of the project for all ClearML artifacts and processes. It can be changed to create new project environment.
+# Use alpha numeric names without spaces. Naming conventions:
+# project-name: "YOUR PROJECT NAME" # (run from dev branch) For personal testing
+project-name: "Detection_Dev"     # (run from dev branch) For development
+# project-name: "Detection_Stage"   # (run from main branch) For staging / pre-production testing
+# project-name: "Detection"         # (run from main branch) For production
+
+# Runs pipeline remotely. If false, all pipeline tasks runs on local machine
+# This should be set to true on production and staging
+pipeline-remote-execution: false
+
+# The initial dataset download location
+base-dataset-url: "https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/dev_dataset.zip"
+
+# The initial model download location. {} for model variant format, specific to YOLO
+base-model-url: "https://github.com/ultralytics/assets/releases/download/v8.3.0/{}.pt"
+
+# The initial evaluation dataset download location
+eval-dataset-url: "https://raw.githubusercontent.com/vanilla-ai-ml/large_datasets/main/test_dataset.zip"
+
+
