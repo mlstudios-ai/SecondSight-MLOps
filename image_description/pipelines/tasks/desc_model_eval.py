@@ -18,7 +18,9 @@ import tempfile, zipfile
 from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
 from enigmaai.desc_util import CaptionDataset, ComputeMetrics, CustomDataCollator
-
+import subprocess, sys
+# Install absl-py on the fly so evaluate.load("rouge") can import it
+subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
 
 # get project configurations
 project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
