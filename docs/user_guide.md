@@ -103,6 +103,15 @@ Depends on **Model Evaluation**. This published a model to the register. There a
 
 ### 7. Tag the new pipeline meaningfully
 
+### MLOps Example Setup
+
+#### End-to-end: Complete operations
+
+#### Split and train: Use existing base dataset
+
+#### Train and publish: Use all existing dataset
+
+#### Update model: Upload addition dataset and retrain existing model
 
 
 
