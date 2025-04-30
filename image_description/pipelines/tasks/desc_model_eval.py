@@ -21,6 +21,7 @@ from enigmaai.desc_util import CaptionDataset, ComputeMetrics, CustomDataCollato
 import subprocess, sys
 # Install absl-py on the fly so evaluate.load("rouge") can import it
 subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "rouge-score"])
 
 # get project configurations
 project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
