@@ -10,7 +10,6 @@ from transformers import (
     ViTFeatureExtractor,
     AutoTokenizer,
     Seq2SeqTrainingArguments)
-import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import sys
@@ -19,7 +18,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 from enigmaai.config import Project, ConfigFactory
 from enigmaai.desc_util import CaptionDataset, ComputeMetrics, CustomDataCollator, CleanSeq2SeqTrainer
 from enigmaai.desc_prep_util import find_dir_with_files
-
+import subprocess
+# Install absl-py on the fly so evaluate.load("rouge") can import it
+subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "rouge-score"])
 
 """
 Initial configurations

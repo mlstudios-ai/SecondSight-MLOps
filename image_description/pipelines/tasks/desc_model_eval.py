@@ -1,8 +1,7 @@
 import sys
 import os
 from clearml import Task, Dataset, Model
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
-Task.add_requirements("requirements.txt")
+#Task.add_requirements("requirements.txt")
 from pathlib import Path
 import logging
 import torch
@@ -15,13 +14,14 @@ from transformers import (
 )
 from PIL import Image
 import tempfile, zipfile
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
 from enigmaai.desc_util import CaptionDataset, ComputeMetrics, CustomDataCollator
-import subprocess, sys
+# import subprocess
 # Install absl-py on the fly so evaluate.load("rouge") can import it
-subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
-subprocess.check_call([sys.executable, "-m", "pip", "install", "rouge-score"])
+# subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
+# subprocess.check_call([sys.executable, "-m", "pip", "install", "rouge-score"])
 
 # get project configurations
 project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
@@ -30,23 +30,26 @@ working_dir = Path(tempfile.mkdtemp()) / project_name
 working_dir.mkdir(parents=True, exist_ok=True)    
 print("Working temp directory at:", working_dir)
 
+"""
+Initialize task for model evaluation
+"""
 # Initialize clearl task
 task = Task.init(project_name=project_name, 
-                task_name="step5_desc_model_evaluation", 
+                task_name="step7_desc_model_evaluation", 
                 task_type=Task.TaskTypes.qc)
 params = {
     'desc_draft_model_id': '96f429eb382f44b1a08a78e168c7bf3b',       # the unpublished model to evaluate 
-    'desc_pub_model_name': '',       # the published model name (also variant) for comparison
+    'desc_pub_model_name': 'student_desc_model',       # the published model name for comparison
 }
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
 task_params = task.get_parameters()
-print("model_eval params=", task_params)
+logging.info("model_eval params=", task_params)
 
 """
 Dataset for evaluation - test.json
 """
-# 2. Fetch split JSON dataset from "Desc_final_dataset" under "Description" project
+# 2. Fetch JSON dataset from "Desc_Caption_EvalDataset" under "Description" project
 split_ds = Dataset.get(dataset_id="41511324658b4cc0a49d3e1c771415f4", only_completed=True, alias="split_data")
 splits_path = Path(split_ds.get_local_copy())
 TEST_CAPTIONS_JSON = splits_path / "test.json"
@@ -109,8 +112,8 @@ if not TEST_CAPTIONS_JSON:
 if not draft_model_id:
     raise ValueError("Missing new/draft model. Please provide draft_model_id.")
 # Mandatory input param
-#if not pub_model_name:
-    #raise ValueError("Missing model. Please provide pub_model_name.")
+if not pub_model_name:
+    raise ValueError("Missing model. Please provide pub_model_name.")
 
 # fetch the draft model path for evaluation    
 draft_model = Model(model_id=draft_model_id)    
