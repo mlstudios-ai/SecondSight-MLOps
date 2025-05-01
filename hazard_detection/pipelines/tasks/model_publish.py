@@ -24,7 +24,7 @@ task = Task.init(project_name=project_name,
                 task_type=Task.TaskTypes.qc)
 
 params = {
-    'draft_model_id': 'c8c88dc8eaa44d558edbc5d911600adb',      # specific version of the model to publish
+    'draft_model_id': '',      # specific version of the model to publish
 }
 
 task.connect(params)
@@ -63,11 +63,9 @@ else:
         print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
         draft_model.publish()
         print(f"Draft model successfully published. New published model name:{draft_model.name} id:{draft_model.id}")
-        print("Done")
     else: 
         print(f"Draft model name:{draft_model.name} id:{draft_model.id} does not meet model validation requirements. Model NOT published.")
    
-
 # show output    
 print("pub_model_project:", project_name)
 print("pub_model_id:", draft_model.id)

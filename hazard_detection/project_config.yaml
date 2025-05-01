@@ -29,7 +29,7 @@ base-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Da
 eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/split_dataset/eval/eval_dataset.zip"
 
 # name to log scalars at evaluation
-eval-metrics-recall-key: "Model Evaluation Metrics"
+eval-metrics-name: "Model Evaluation Metrics"
 
 # minimum performance requirements for model publishing
 validation-metrics-recall: 0.3
