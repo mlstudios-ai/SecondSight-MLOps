@@ -22,6 +22,7 @@ import subprocess
 # Install absl-py on the fly so evaluate.load("rouge") can import it
 subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
 subprocess.check_call([sys.executable, "-m", "pip", "install", "rouge-score"])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "tensorboardX"])
 
 """
 Initial configurations

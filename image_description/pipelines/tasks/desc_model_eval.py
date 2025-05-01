@@ -17,11 +17,12 @@ import tempfile, zipfile
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
+from enigmaai.desc_prep_util import find_dir_with_files
 from enigmaai.desc_util import CaptionDataset, ComputeMetrics, CustomDataCollator
-# import subprocess
+import subprocess
 # Install absl-py on the fly so evaluate.load("rouge") can import it
-# subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
-# subprocess.check_call([sys.executable, "-m", "pip", "install", "rouge-score"])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "rouge-score"])
 
 # get project configurations
 project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
@@ -38,13 +39,29 @@ task = Task.init(project_name=project_name,
                 task_name="step7_desc_model_evaluation", 
                 task_type=Task.TaskTypes.qc)
 params = {
-    'desc_draft_model_id': '96f429eb382f44b1a08a78e168c7bf3b',       # the unpublished model to evaluate 
+    'dataset_id': 'f6865cde77d843eb93829a268b2adeaf',                # specific version of the eval caption dataset
+    'dataset_name': 'Desc_Caption_EvalDataset ',              # latest registered dataset
+    'eval_dataset_id': 'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
+    'eval_dataset_name': 'eval_dataset_zip',
+    'desc_draft_model_id': '',       # the unpublished model to evaluate 
     'desc_pub_model_name': 'student_desc_model',       # the published model name for comparison
 }
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
 task_params = task.get_parameters()
 logging.info("model_eval params=", task_params)
+
+dataset_id = params['dataset_id']
+dataset_name = params['dataset_name']
+img_dataset_id = params['eval_dataset_id']
+img_dataset_name = params['eval_dataset_name']
+# validate task input params
+if not dataset_id and not dataset_name:
+    task.mark_completed(status_message="No dataset provided. Nothing to evaluate on. Ensure to execute task 4")
+    exit(0)
+if not img_dataset_id and not img_dataset_name:
+    task.mark_completed(status_message="No image dataset provided. Nothing to evaluate.")
+    exit(0)
 
 """
 Dataset for evaluation - test.json
@@ -55,14 +72,21 @@ splits_path = Path(split_ds.get_local_copy())
 TEST_CAPTIONS_JSON = splits_path / "test.json"
 logging.info(f"Split JSONs located at: {splits_path}")
 
-# 3. Fetch images ZIP from "base_dataset_zip" under "Detection" project
-#img_ds = Dataset.get(dataset_project="Detection", dataset_name="base_dataset_zip", only_completed=True, alias="image_data")
-images_data = Dataset.get(
-    dataset_id= '1201a0351b6442f1ba12245d5db779a1', #"2231b5b121924ed684d6560cf6839619",
-    only_completed=True,
-    alias="base_images"  
-)
-raw_path = Path(images_data.get_local_copy())
+
+"""
+Fetching image dataset for training
+"""
+# Fetch images ZIP from "eval_dataset_zip" under "Detection" project
+try: 
+    # download the latest registered dataset
+    server_dataset = Dataset.get(dataset_id=img_dataset_id, only_completed=True, alias="eval_img_dataset")
+except ValueError:
+    # download the latest registered dataset
+    server_dataset = Dataset.get(dataset_name=img_dataset_name, dataset_project="Detection", only_completed=True, alias="eval_img_dataset")
+extract_path = server_dataset.get_local_copy()          
+print(f"Downloaded base dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
+
+raw_path = Path(extract_path)
 if raw_path.is_dir():
     inner_zips = list(raw_path.glob("*.zip"))
     if inner_zips:
@@ -79,29 +103,17 @@ if raw_path.is_file() and raw_path.suffix.lower() == ".zip":
     extract_path = extract_root
 else:
     extract_path = raw_path
+images_dir = find_dir_with_files(extract_path, "images")
+logging.info(f"Images downloaded to: {images_dir}")
 
-# DETECT images
-def find_dir_with_most_files(root: Path, name: str) -> Path:
-    """Search recursively for folders named `name` and return the one containing the most files."""
-    best_dir = None
-    best_count = 0
-    for candidate in root.rglob(name):
-        if candidate.is_dir():
-            cnt = sum(1 for _ in candidate.iterdir() if _.is_file())
-            if cnt > best_count:
-                best_dir, best_count = candidate, cnt
-    if not best_dir:
-        raise FileNotFoundError(f"No directory named '{name}' found under {root}")
-    return best_dir
-IMAGE_ROOT = find_dir_with_most_files(extract_path, "images")
-logging.info(f"Images located at: {IMAGE_ROOT}")
-
-
-draft_model_id = task_params['General/desc_draft_model_id']
-pub_model_name = task_params["General/desc_pub_model_name"]
-MAX_TARGET_LEN     = 64
-EVAL_BATCH_SIZE    = 16
-DEVICE             = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+"""
+Model evaluation
+"""
+draft_model_id = task_params['desc_draft_model_id']
+pub_model_name = task_params["desc_pub_model_name"]
+max_target_len     = 64
+eval_batch_size    = 16
+device             = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 out_dir = working_dir / "outputs_eval" 
 
 # no eval dataset provided
@@ -149,11 +161,11 @@ def load_model(model_path):
     model.config.pad_token_id            = tokenizer.pad_token_id
     model.config.decoder_start_token_id  = tokenizer.bos_token_id
     model.config.eos_token_id            = tokenizer.eos_token_id
-    model.config.max_length              = MAX_TARGET_LEN
+    model.config.max_length              = max_target_len
     model.config.num_beams               = 4
     model.config.length_penalty          = 2.0
     model.config.early_stopping          = True
-    model.to(DEVICE)
+    model.to(device)
     return model, feature_extractor, tokenizer
 
 def generate_caption(image_path, model, fe, tk, max_new_tokens=40, num_beams=4, decode=True):
@@ -174,7 +186,7 @@ def generate_caption(image_path, model, fe, tk, max_new_tokens=40, num_beams=4, 
 eval_args = Seq2SeqTrainingArguments(
     output_dir=out_dir,
     run_name="test_student_model",# temp directory
-    per_device_eval_batch_size=EVAL_BATCH_SIZE,
+    per_device_eval_batch_size=eval_batch_size,
     predict_with_generate=True,
     do_train=False,
     do_eval=True,
@@ -184,8 +196,8 @@ eval_args = Seq2SeqTrainingArguments(
 
 # function to run evaluation 
 def run_eval(split_name, captions_json, model, feature_extractor, tokenizer):
-    ds = CaptionDataset(captions_json, IMAGE_ROOT, feature_extractor, tokenizer, MAX_TARGET_LEN)
-    collator_fn = CustomDataCollator(model, tokenizer, DEVICE)
+    ds = CaptionDataset(captions_json, images_dir, feature_extractor, tokenizer, max_target_len)
+    collator_fn = CustomDataCollator(model, tokenizer, device)
     compute_metrics_fn = ComputeMetrics(tokenizer)
     trainer = Seq2SeqTrainer(
         model=model,
