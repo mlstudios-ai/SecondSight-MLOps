@@ -55,8 +55,8 @@ dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']
 img_dataset_id = params['eval_dataset_id']
 img_dataset_name = params['eval_dataset_name']
-draft_model_id = task_params['desc_draft_model_id']
-pub_model_name = task_params["desc_pub_model_name"]
+draft_model_id = params['desc_draft_model_id']
+pub_model_name = params["desc_pub_model_name"]
 
 # validate task input params
 if not dataset_id and not dataset_name:
