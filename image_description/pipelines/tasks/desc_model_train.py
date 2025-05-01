@@ -242,6 +242,6 @@ output_model = OutputModel(
     framework="pytorch"
 )
 # Upload the ZIP as the model weights
-output_model.update_weights(weights_filename=str(zip_path))
+output_model.update_weights(weights_filename=str(best_dir))
 print("Registered model id:", output_model.id)
 logging.info("Student training on ClearML complete.")
