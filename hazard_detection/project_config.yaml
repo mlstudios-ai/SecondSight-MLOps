@@ -29,4 +29,4 @@ eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Da
 storage-cache-limit: 3
 
 # minimum performance requirements for model publishing
-validation.metrics.recall: 0.3
+validation-metrics-recall: 0.3
