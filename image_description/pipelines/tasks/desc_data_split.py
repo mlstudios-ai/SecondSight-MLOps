@@ -3,26 +3,29 @@ import os
 from pathlib import Path
 import logging
 import json
+import sys
 from sklearn.model_selection import train_test_split
 from clearml import Task, Dataset, StorageManager
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
+from enigmaai.config import Project, ConfigFactory
 
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-"""
-Split dataset after including reference descriptions, downloaded from ClearML server into train, val and test
-"""
-project_name="Description"
+# get project configurations
+project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
+project_name = project.get('project-name')
+
+
 task = Task.init(project_name=project_name, 
-                task_name="step3_desc_split_data", 
+                task_name="step5_desc_split_data", 
                 task_type=Task.TaskTypes.data_processing)
 
 params = {
     'cap_dataset_id': '',
-    'cap_dataset_name': 'Desc_Caption_Dataset',
+    'cap_dataset_name': 'Desc_Caption_BaseDataset',
     'random_state': 42,
-    'val_size': 0.15,
-    'test_size': 0.15,
+    'val_size': 0.2,
 }
 
 # logger = task.get_logger()
@@ -61,36 +64,30 @@ logging.info(f"Images downloaded to: {images_dir}")
 # Prepare list of stems
 all_stems = [Path(fn).stem for fn in mapping.keys()]
 
-"""
-Split dataset to train, val, test
-"""
 
+"""
+Split dataset after including reference descriptions, downloaded from ClearML server into train and val
+"""
 # split sizes
 val_size = params['val_size']
-test_size = params['test_size']
 random_state = params['random_state']
 
 # split train, val, test sets according task params
-train_stems, remaining_stems = train_test_split(all_stems, 
-                                         test_size = val_size + test_size, 
+train_stems, val_stems = train_test_split(all_stems, 
+                                         test_size = val_size, 
                                          random_state=random_state)
-
-val_stems, test_stems = train_test_split(remaining_stems, 
-                                         test_size=test_size/(val_size + test_size), 
-                                         random_state=random_state) 
 # Build split mappings
 train_map = {f"{s}.jpg": mapping[f"{s}.jpg"] for s in train_stems}
 val_map   = {f"{s}.jpg": mapping[f"{s}.jpg"] for s in val_stems}
-test_map  = {f"{s}.jpg": mapping[f"{s}.jpg"] for s in test_stems}
 
 """
-Move files to train, val, test folders
+Move files to train, val folders
 """
 # destination path for split dataset
-dest_path = Path(extract_path / "split_dataset")        
+dest_path = Path(extract_path / "Desc_train_val_dataset")        
 os.makedirs(dest_path, exist_ok=True)
 
-for split, split_map in [("train", train_map), ("val", val_map), ("test", test_map)]:
+for split, split_map in [("train", train_map), ("val", val_map)]:
     dst = dest_path / f"{split}.json"
     dst.parent.mkdir(parents=True, exist_ok=True)
     with open(dst, "w") as f:
@@ -109,7 +106,7 @@ for split, split_map in [("train", train_map), ("val", val_map), ("test", test_m
 # Upload the splits as a new ClearML dataset
 split_data = Dataset.create(
     dataset_project=project_name,
-    dataset_name="Desc_final_dataset"
+    dataset_name="Desc_train_val_dataset"
 )
 split_data.add_files(str(dest_path))
 split_data.upload()
