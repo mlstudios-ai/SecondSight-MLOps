@@ -72,10 +72,10 @@ Reference description/caption Dataset for evaluation - desc_caption_testdataset.
 # 2. Fetch JSON dataset from "Desc_Caption_EvalDataset" under "Description" project
 try: 
     # download the latest registered caption eval dataset
-    server_dataset = Dataset.get(dataset_id=img_dataset_id, only_completed=True, alias="eval_cap_dataset")
+    server_dataset = Dataset.get(dataset_id=dataset_id, only_completed=True, alias="eval_cap_dataset")
 except ValueError:
     # download the latest registered dataset
-    server_dataset = Dataset.get(dataset_name=img_dataset_name, dataset_project=project_name, only_completed=True, alias="eval_cap_dataset")
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, only_completed=True, alias="eval_cap_dataset")
 eval_cap_path = server_dataset.get_local_copy()          
 print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {eval_cap_path}")
 eval_cap_path = Path(eval_cap_path)
