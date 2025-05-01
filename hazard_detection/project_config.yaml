@@ -27,3 +27,6 @@ eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Da
 
 # cache limit for number of files for local downloads. The oldest will be removed if limit is exceeded
 storage-cache-limit: 3
+
+# minimum performance requirements for model publishing
+validation.metrics.recall: 0.3
