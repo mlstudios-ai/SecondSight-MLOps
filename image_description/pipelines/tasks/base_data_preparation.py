@@ -1,4 +1,4 @@
-from clearml import Task, Dataset, Model
+from clearml import Task, Dataset
 import logging, zipfile
 import os, sys
 from pathlib import Path
@@ -17,8 +17,6 @@ If a label file is empty (i.e. no lines are present), this script will instead a
 default annotation indicating no objects detected. In that case, the default annotation is:
     "class_label": [5], "additional_values": []
 The final output is a JSON file mapping each image filename to a list of annotation dictionaries.
-THe dataset has the following structure:
-data.yaml
 """
 
 # Configure logging

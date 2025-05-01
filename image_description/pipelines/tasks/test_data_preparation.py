@@ -17,8 +17,6 @@ If a label file is empty (i.e. no lines are present), this script will instead a
 default annotation indicating no objects detected. In that case, the default annotation is:
     "class_label": [5], "additional_values": []
 The final output is a JSON file mapping each image filename to a list of annotation dictionaries.
-THe dataset has the following structure:
-data.yaml
 """
 
 # Configure logging
@@ -35,7 +33,7 @@ params = {
     'eval_dataset_name':'eval_dataset_zip'
 }
 
-# logger = task.get_logger()
+logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
 
