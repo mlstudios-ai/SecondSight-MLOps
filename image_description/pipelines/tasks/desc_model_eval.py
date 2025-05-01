@@ -55,6 +55,9 @@ dataset_id = params['dataset_id']
 dataset_name = params['dataset_name']
 img_dataset_id = params['eval_dataset_id']
 img_dataset_name = params['eval_dataset_name']
+draft_model_id = task_params['desc_draft_model_id']
+pub_model_name = task_params["desc_pub_model_name"]
+
 # validate task input params
 if not dataset_id and not dataset_name:
     task.mark_completed(status_message="No dataset provided. Nothing to evaluate on. Ensure to execute task 4")
@@ -114,8 +117,6 @@ logging.info(f"Images downloaded to: {images_dir}")
 """
 Model evaluation
 """
-draft_model_id = task_params['desc_draft_model_id']
-pub_model_name = task_params["desc_pub_model_name"]
 max_target_len = 64
 eval_batch_size = 16
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
