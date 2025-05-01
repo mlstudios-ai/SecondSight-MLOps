@@ -114,7 +114,7 @@ pipe.add_step(
 """ 
 STEP 3: Model training
 """
-   
+""" 
 def load_hyp_config(model_variant) -> dict:
     hyp_config_file = f"{model_variant}_hyp_config.yaml"
     hyp_config_path = Path(__file__).parent / hyp_config_file
@@ -122,9 +122,14 @@ def load_hyp_config(model_variant) -> dict:
     if hyp_config_path.exists():    
         with open(hyp_config_path, "r") as file:
             hyperparameters = yaml.safe_load(file)
-    
     return hyperparameters
-
+"""
+params = {
+    'split_dataset_id': '',                
+    'split_dataset_name': 'Desc_Split_dataset',              
+    'base_dataset_id': '26083b24ab0c47219a5e4f3fe026b085',
+    'base_dataset_name': 'base_dataset_zip'
+}
 # model training settings
 pipe.add_parameter("model_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore model_dataset_name")
 pipe.add_parameter("model_id", "", "(Optional) Pre-trained model from the server. If not provided, use default based on model_name")
