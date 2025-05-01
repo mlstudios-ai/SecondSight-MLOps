@@ -1,6 +1,5 @@
 import sys
 import os
-
 from pathlib import Path
 import yaml
 from clearml.automation import PipelineController
@@ -102,7 +101,7 @@ STEP 3: Train Data Reference description generation
 """
 dataset_id = ""
 dataset_name = "Desc_Base_Dataset"
-base_dataset_id = '26083b24ab0c47219a5e4f3fe026b085'
+base_dataset_id = ''
 base_dataset_name = "base_dataset_zip"
 
 pipe.add_parameter("dataset_id", dataset_id, "latest id of base data img-label mapping")
@@ -137,7 +136,7 @@ STEP 4: Test Data Reference description generation
 """
 dataset_id = ""
 dataset_name = "Desc_Eval_Dataset"
-eval_dataset_id = 'e19da140dd6a479c864dd7bdf930918d'
+eval_dataset_id = ''
 eval_dataset_name = "eval_dataset_zip"
 
 pipe.add_parameter("dataset_id", dataset_id, "latest id of eval data img-label mapping from step 2")
@@ -221,7 +220,7 @@ def load_hyp_config(model_variant) -> dict:
 """
 split_dataset_id= '',               
 split_dataset_name ='Desc_Split_dataset'            
-base_dataset_id = '26083b24ab0c47219a5e4f3fe026b085'
+base_dataset_id = ''
 base_dataset_name = 'base_dataset_zip'
 
 # model training settings
@@ -240,7 +239,7 @@ def post_training_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="desc_model_training",
-    parents=[""],
+    parents=["train_val_splitting"],
     base_task_project=project_name,
     base_task_name="step6_desc_model_training",
     parameter_override={
