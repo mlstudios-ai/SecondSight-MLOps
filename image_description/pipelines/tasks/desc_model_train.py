@@ -190,8 +190,7 @@ training_args = Seq2SeqTrainingArguments(
     metric_for_best_model="cider", # pick the checkpoint with highest cider
     greater_is_better=True,
     report_to=["tensorboard"],    # enable TensorBoard
-    logging_dir=tensorboard_dir,
-    disable_tqdm=True
+    logging_dir=tensorboard_dir
 )
 trainer = CleanSeq2SeqTrainer(
     model=model,
