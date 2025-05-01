@@ -43,7 +43,7 @@ params = {
     'dataset_name': 'Desc_Caption_EvalDataset ',              # latest registered dataset
     'eval_dataset_id': 'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
     'eval_dataset_name': 'eval_dataset_zip',
-    'desc_draft_model_id': '63169b409d394272a0193ea344726fe8',       # the unpublished model to evaluate 
+    'desc_draft_model_id': '391ee5bfbba747ecb7aa01203b63441e',       # the unpublished model to evaluate 
     'desc_pub_model_name': 'student_desc_model',       # the published model name for comparison
 }
 task.connect(params)
