@@ -35,13 +35,6 @@ working_dir = Path(tempfile.mkdtemp()) / project_name
 working_dir.mkdir(parents=True, exist_ok=True)    
 print("Working temp directory at:", working_dir)
 
-trainout_dir = working_dir / "outputs" / "models"
-tensorboard_dir = working_dir/ "outputs" / "tensorboard_logs"
-trainout_dir.mkdir(parents=True, exist_ok=True)
-tensorboard_dir.mkdir(parents=True, exist_ok=True)
-best_dir = working_dir / "outputs"/ "best_model"
-best_dir.mkdir(parents=True, exist_ok=True)
-
 """
 Initialize task for model training
 """
@@ -174,6 +167,10 @@ compute_metrics_fn = ComputeMetrics(tokenizer)
 """
 Model Training
 """
+trainout_dir = working_dir / "outputs" / "models"
+tensorboard_dir = working_dir/ "outputs" / "tensorboard_logs"
+trainout_dir.mkdir(parents=True, exist_ok=True)
+tensorboard_dir.mkdir(parents=True, exist_ok=True)
 # TrainingArguments & Trainer
 training_args = Seq2SeqTrainingArguments(
     output_dir=trainout_dir,
@@ -229,7 +226,8 @@ Saving best model after training and uploading artifacts
 best_ckpt = trainer.state.best_model_checkpoint
 task.get_logger().report_text(f"Best checkpoint at: {best_ckpt}")
 best_model = VisionEncoderDecoderModel.from_pretrained(best_ckpt)
-
+best_dir = working_dir / "outputs"/ "best_model"
+best_dir.mkdir(parents=True, exist_ok=True)
 best_model.save_pretrained(best_dir)
 tokenizer.save_pretrained(best_dir)
 feature_extractor.save_pretrained(best_dir)

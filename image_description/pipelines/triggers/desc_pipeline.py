@@ -1,7 +1,6 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
-
 from pathlib import Path
 import yaml
 from clearml.automation import PipelineController
@@ -36,47 +35,41 @@ Upload Evaluation Dataset - upload base dataset. This will trigger default pipel
 """
 
 # get project configurations
-project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
+project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
 project_name = project.get('project-name')
-pipeline_name = "YOLOv11 Pipeline"
+pipeline_name = "VLM Pipeline"
 
 # Connecting ClearML with the current pipeline, from here on everything is logged automatically
 pipe = PipelineController(name=pipeline_name, 
                           project=project_name, 
                           add_pipeline_tags=False)
-
 pipe.set_default_execution_queue("desc_pipeline")
 
 """ 
-STEP 1.1: Load base dataset
+STEP 1.1: Create Image-Label Mapping dataset from Base dataset under Detection Project
 """
-
 # intial dataset to download. If none provided, task will complete without upload
-base_dataset_url = project.get("base-dataset-url")
-# base_dataset_url = ""
-base_dataset_name = "base_dataset"
-# base_dataset_name = ""
-pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
-pipe.add_parameter("base_dataset_name", base_dataset_name, "Name of the dataset to upload to the server. Also used for the next step.")
+base_dataset_id = ""
+base_dataset_name = "base_dataset_zip"
 
-def pre_base_upload_callback(pipeline, node, param_override) -> bool:    
-    print("Cloning upload_base_dataset id={}".format(node.base_task_id))    
+pipe.add_parameter("base_dataset_id", base_dataset_id, "lastest of base_dataset_zip id")
+pipe.add_parameter("base_dataset_name", base_dataset_name, "lastest of base_dataset_zip name")
+def pre_base_dataprep_callback(pipeline, node, param_override) -> bool:    
+    print("Cloning step1_desc_basedata_preparation id={}".format(node.base_task_id))    
     return True
-
-def post_base_upload_callback(pipeline, node) -> None:   
-    print("Completed upload_base_dataset id={} {}".format(node.base_task_id, node.executed))    
+def post_base_dataprep_callback(pipeline, node) -> None:   
+    print("Completed step1_desc_basedata_preparation id={} {}".format(node.base_task_id, node.executed))    
     return
-
 pipe.add_step(
-    name="upload_base_dataset",
+    name="BaseData_Mapping",
     base_task_project=project_name,
-    base_task_name="Upload Base Dataset",
+    base_task_name="step1_desc_basedata_preparation",
     parameter_override={
         "General/dataset_url": "${pipeline.base_dataset_url}",
         "General/output_dataset_name": "${pipeline.base_dataset_name}"
         },
-    pre_execute_callback=pre_base_upload_callback,
-    post_execute_callback=post_base_upload_callback
+    pre_execute_callback=pre_base_dataprep_callback,
+    post_execute_callback=post_base_dataprep_callback
 )
 
 """ 
