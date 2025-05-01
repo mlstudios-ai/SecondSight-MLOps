@@ -51,6 +51,11 @@ The dataset should be in the following structure:
 data.yaml
 images/
 labels/
+
+This task combines data validation, and data preprocessing.
+- Data validation ensure all images have corresponding labels.
+- Data proprocessing splits the data into train, val, test, 
+  and adds offline augmented data into the train set (NOT IMPLEMENTED).
 """
 
 project = ConfigFactory.get_config(Project.HAZARD_DETECTION)
