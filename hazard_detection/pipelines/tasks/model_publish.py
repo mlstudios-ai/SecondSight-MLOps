@@ -7,8 +7,12 @@ import os
 from enigmaai.config import Project, ConfigFactory
 
 """
-Publish a specific draft model from the server. The model can be in Draft for Published state.
-If it is already in Published state, the model will not be published again. Refer to Model.publish() API.
+Publish a specific draft model from the server if it meets the performance requirements. 
+The model can be in Draft for Published state. If it is already in Published state, the model will 
+not be published again. Refer to Model.publish() API.
+
+This task combined model validation and publishing. The input (or draft) model is validated against
+performance metrics. If it passes, the model gets published, otherwise do nothing.
 """
 
 # get project configurations
@@ -20,7 +24,7 @@ task = Task.init(project_name=project_name,
                 task_type=Task.TaskTypes.qc)
 
 params = {
-    'draft_model_id': '',      # specific version of the dataset. if provided, ignore dataset_name
+    'draft_model_id': 'c8c88dc8eaa44d558edbc5d911600adb',      # specific version of the model to publish
 }
 
 task.connect(params)
@@ -39,14 +43,30 @@ if not draft_model_id:
 draft_model = Model(model_id=draft_model_id)    
 print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
 
-# publish the model
-if not draft_model.published:
-    print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
-    draft_model.publish()
-    print(f"Draft model successfully published. New published model name:{draft_model.name} id:{draft_model.id}")
-    print("Done")
-else: 
+# validate and publish model
+if draft_model.published:
     print(f"Model already published with name:{draft_model.name} id:{draft_model.id}")
+else: 
+    # get validation metrics requirements
+    valid_recall = project.get("validation-metrics-recall")
+    print(f"Validating with performance requirement Recall >= {valid_recall}" )
+
+    # get model eval recall metric
+    draft_recall = draft_model.get_metadata("validation-metrics-recall")
+    if not draft_recall:
+        raise Exception(f"Draft model name:{draft_model.name} id:{draft_model.id} has not been evaluated. Please evaluate using the Model Evaluation task before publishing.")
+
+    draft_recall = float(draft_recall)
+    
+    # validate and publish model
+    if draft_recall >= valid_recall: 
+        print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
+        draft_model.publish()
+        print(f"Draft model successfully published. New published model name:{draft_model.name} id:{draft_model.id}")
+        print("Done")
+    else: 
+        print(f"Draft model name:{draft_model.name} id:{draft_model.id} does not meet model validation requirements. Model NOT published.")
+   
 
 # show output    
 print("pub_model_project:", project_name)
