@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 
-from clearml import Task, Dataset, Model
+from clearml import Task, Dataset, Model, Logger
 from pathlib import Path
 import os
 import shutil
@@ -37,14 +37,14 @@ One of eval_dataset_id or eval_dataset_name must be provided to load evaluation 
 """
 params = {
     'eval_dataset_id': '',      # specific version of the dataset. if provided, ignore dataset_name
-    'eval_dataset_name': '',    # latest registered dataset. used if dataset_id is empty
+    'eval_dataset_name': 'eval_dataset',    # latest registered dataset. used if dataset_id is empty
     'draft_model_id': '',       # the unpublished model to evaluate 
-    'pub_model_name': '',       # the published model name (also variant) for comparison
+    'pub_model_name': 'yolo11n',       # the published model name (also variant) for comparison
     'eval_args': ''             # string format of dictionary of hyperparameters for YOLO.val()
 }
 
 task.connect(params)
-task.execute_remotely(queue_name="training")
+task.execute_remotely(queue_name="training") 
 task_params = task.get_parameters()
 print("model_eval params=", task_params)
 
@@ -66,6 +66,10 @@ if not draft_model_id:
 # Mandatory input param
 if not pub_model_name:
     raise ValueError("Missing model. Please provide pub_model_name.")
+
+# Mandatory input param
+if not eval_args_str:
+    raise ValueError("Missing eval configurations. Please provide eval_args_str.")
 
 eval_args = yaml.safe_load(eval_args_str)
 
@@ -135,6 +139,9 @@ else:
     draft_yolo_model = YOLO(draft_model_path)
     draft_metrics = draft_yolo_model.val(**eval_args)
     draft_recall = draft_metrics.box.map
+    draft_model.set_metadata("validation-metrics-recall", draft_recall) # use metadata due to scalar inaccessible using SDK
+    draft_model.report_single_value("recall", draft_recall)
+    draft_model.report_scalar(project.get("eval-metrics-name"), "draft", draft_recall, 1)
 
     # evaluate the published model
     pub_model_path = pub_model.get_local_copy(raise_on_error=True)
@@ -142,8 +149,13 @@ else:
     pub_yolo_model = YOLO(pub_model_path)
     pub_metrics = pub_yolo_model.val(**eval_args)
     pub_recall = pub_metrics.box.map
+    pub_model.set_metadata("validation-metrics-recall", pub_recall) # use metadata due to scalar inaccessible using SDK
+    # NOTE: can not report metrics on published models
     
-    # show metrics for comparision
+    # log task scalar metrics
+    logger = task.get_logger()
+    logger.report_scalar(project.get("eval-metrics-name"), "draft", draft_recall, 1)
+    logger.report_scalar(project.get("eval-metrics-name"), "published", pub_recall, 1)
     print("keys=", draft_metrics.keys)
     print("draft_metrics=", draft_metrics.mean_results(), " recall=", draft_recall)
     print("pub_metrics=", pub_metrics.mean_results(), " recall=", pub_recall)

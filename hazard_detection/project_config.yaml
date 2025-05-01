@@ -10,6 +10,9 @@ project-name: "Detection_Dev"     # (run from dev branch) For development
 # project-name: "Detection_Stage"   # (run from main branch) For staging / pre-production testing
 # project-name: "Detection"         # (run from main branch) For production
 
+# cache limit for number of files for local downloads. The oldest will be removed if limit is exceeded
+storage-cache-limit: 3
+
 # Runs pipeline remotely. If false, all pipeline tasks runs on local machine
 # This should be set to true on production and staging
 pipeline-remote-execution: false
@@ -25,8 +28,8 @@ base-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Da
 # eval-dataset-url: "https://files.clear.ml/Detection/.datasets/eval_dataset_zip/eval_dataset_zip.e19da140dd6a479c864dd7bdf930918d/artifacts/data/dataset.e19da140dd6a479c864dd7bdf930918d.ta98q5ob.zip"
 eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/split_dataset/eval/eval_dataset.zip"
 
-# cache limit for number of files for local downloads. The oldest will be removed if limit is exceeded
-storage-cache-limit: 3
+# name to log scalars at evaluation
+eval-metrics-recall-key: "Model Evaluation Metrics"
 
 # minimum performance requirements for model publishing
 validation-metrics-recall: 0.3
