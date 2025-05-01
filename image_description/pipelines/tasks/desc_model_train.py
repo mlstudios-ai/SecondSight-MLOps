@@ -234,6 +234,9 @@ task.upload_artifact(name="best_model", artifact_object=best_dir)
 result_file = working_dir / "outputs" / "results.csv"
 task.upload_artifact(name="results", artifact_object=result_file)
 
+import shutil
+zip_path = shutil.make_archive(str(best_dir), 'zip', root_dir=str(best_dir))
+
 # Register best model as an OutputModel
 task = Task.current_task()
 output_model = OutputModel(
@@ -242,7 +245,6 @@ output_model = OutputModel(
     framework="pytorch"
 )
 # Upload the ZIP as the model weights
-zip_path = best_dir.with_suffix(".zip")
-output_model.update_weights(weights_filename=str(zip_path))
+output_model.update_weights(weights_filename=zip_path)
 print("Registered model id:", output_model.id)
 logging.info("Student training on ClearML complete.")
