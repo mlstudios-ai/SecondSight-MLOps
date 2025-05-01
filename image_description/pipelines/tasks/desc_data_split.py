@@ -48,7 +48,7 @@ except ValueError:
 extract_path = server_dataset.get_local_copy()          
 print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
 extract_path = Path(extract_path)
-caption_file = extract_path / project_name/ "desc_caption_basedataset.json"
+caption_file = extract_path / "desc_caption_basedataset.json"
 mapping = json.loads(open(caption_file, "r").read())
 logging.info(f"Loaded {len(mapping)} captions from {caption_file}")
 
