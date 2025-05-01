@@ -17,15 +17,13 @@ project_name = project.get('project-name')
 task = Task.init(project_name=project_name, 
                 task_name="step5_desc_split_data", 
                 task_type=Task.TaskTypes.data_processing)
-
 params = {
     'cap_dataset_id': '',
     'cap_dataset_name': 'Desc_Caption_BaseDataset',
     'random_state': 42,
     'val_size': 0.2,
 }
-
-# logger = task.get_logger()
+logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
 
@@ -40,14 +38,16 @@ dataset_name = params['cap_dataset_name']
 if not dataset_id and not dataset_name:
     task.mark_completed(status_message="No annotation dataset provided. Nothing to train on.")
     exit(0)
-if dataset_name: 
+try: 
     # download the latest registered dataset
-    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, only_completed=True, alias="desc_split_data")
+    server_dataset = Dataset.get(dataset_id=dataset_id, only_completed=True, alias="desc_cap_data")
+except ValueError:
+    # download the latest registered dataset
+    server_dataset = Dataset.get(dataset_name=dataset_name, dataset_project=project_name, only_completed=True, alias="desc_cap_data")
 
 extract_path = server_dataset.get_local_copy()          
 print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
 extract_path = Path(extract_path)
-
 caption_file = extract_path / project_name/ "desc_caption_basedataset.json"
 mapping = json.loads(open(caption_file, "r").read())
 logging.info(f"Loaded {len(mapping)} captions from {caption_file}")
@@ -57,11 +57,9 @@ Split dataset after including reference descriptions, downloaded from ClearML se
 """
 # Prepare list of stems
 all_stems = [Path(fn).stem for fn in mapping.keys()]
-
 # split sizes
 val_size = params['val_size']
 random_state = params['random_state']
-
 # split train, val, test sets according task params
 train_stems, val_stems = train_test_split(all_stems, test_size = val_size, random_state=random_state)
 # Build split mappings
@@ -74,7 +72,6 @@ Move files to train, val folders
 # destination path for split dataset
 dest_path = Path(extract_path / project_name/ "Desc_Split_dataset")        
 os.makedirs(dest_path, exist_ok=True)
-
 for split, split_map in [("train", train_map), ("val", val_map)]:
     dst = dest_path / f"{split}.json"
     dst.parent.mkdir(parents=True, exist_ok=True)
@@ -94,8 +91,7 @@ for split, split_map in [("train", train_map), ("val", val_map)]:
 # Upload the splits as a new ClearML dataset
 split_data = Dataset.create(
     dataset_project=project_name,
-    dataset_name="Desc_Split_dataset"
-)
+    dataset_name="Desc_Split_dataset")
 split_data.add_files(str(dest_path))
 split_data.upload()
 split_data.finalize()
