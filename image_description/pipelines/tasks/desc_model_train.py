@@ -146,7 +146,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_model(encoder, decoder):
     feature_extractor = ViTFeatureExtractor.from_pretrained(encoder)
-    tokenizer         = AutoTokenizer.from_pretrained(decoder)
+    tokenizer = AutoTokenizer.from_pretrained(decoder)
     model = VisionEncoderDecoderModel.from_encoder_decoder_pretrained(encoder, decoder)
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
     # Resize the decoder’s embeddings to match new vocab size

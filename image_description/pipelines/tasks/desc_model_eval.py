@@ -64,27 +64,32 @@ if not img_dataset_id and not img_dataset_name:
     exit(0)
 
 """
-Dataset for evaluation - test.json
+Reference description/caption Dataset for evaluation - desc_caption_testdataset.json
 """
 # 2. Fetch JSON dataset from "Desc_Caption_EvalDataset" under "Description" project
-split_ds = Dataset.get(dataset_id="41511324658b4cc0a49d3e1c771415f4", only_completed=True, alias="split_data")
-splits_path = Path(split_ds.get_local_copy())
-TEST_CAPTIONS_JSON = splits_path / "test.json"
-logging.info(f"Split JSONs located at: {splits_path}")
-
+try: 
+    # download the latest registered caption eval dataset
+    server_dataset = Dataset.get(dataset_id=img_dataset_id, only_completed=True, alias="eval_cap_dataset")
+except ValueError:
+    # download the latest registered dataset
+    server_dataset = Dataset.get(dataset_name=img_dataset_name, dataset_project=project_name, only_completed=True, alias="eval_cap_dataset")
+eval_cap_path = server_dataset.get_local_copy()          
+print(f"Downloaded dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {eval_cap_path}")
+eval_cap_path = Path(eval_cap_path)
+test_json = eval_cap_path / "desc_caption_testdataset.json"
+logging.info(f"Split JSONs located at: {eval_cap_path}")
 
 """
-Fetching image dataset for training
+Fetching image dataset for evaluation
 """
 # Fetch images ZIP from "eval_dataset_zip" under "Detection" project
 try: 
     # download the latest registered dataset
     server_dataset = Dataset.get(dataset_id=img_dataset_id, only_completed=True, alias="eval_img_dataset")
 except ValueError:
-    # download the latest registered dataset
     server_dataset = Dataset.get(dataset_name=img_dataset_name, dataset_project="Detection", only_completed=True, alias="eval_img_dataset")
 extract_path = server_dataset.get_local_copy()          
-print(f"Downloaded base dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
+print(f"Downloaded eval image dataset name: {server_dataset.name} id: ({server_dataset.id}) to: {extract_path}")
 
 raw_path = Path(extract_path)
 if raw_path.is_dir():
@@ -111,13 +116,13 @@ Model evaluation
 """
 draft_model_id = task_params['desc_draft_model_id']
 pub_model_name = task_params["desc_pub_model_name"]
-max_target_len     = 64
-eval_batch_size    = 16
-device             = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+max_target_len = 64
+eval_batch_size = 16
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 out_dir = working_dir / "outputs_eval" 
 
-# no eval dataset provided
-if not TEST_CAPTIONS_JSON:
+# no eval caption and image dataset provided
+if not test_json or not images_dir:
     task.mark_completed(status_message="No dataset provided for evaluation.")
     exit(0)
 # no model provided for evaluation
@@ -182,7 +187,7 @@ def generate_caption(image_path, model, fe, tk, max_new_tokens=40, num_beams=4, 
         )
     return tk.decode(output_ids[0], skip_special_tokens=True) if decode else output_ids[0]
 
-# ─── Evaluation Setup ─────────────
+# Evaluation Setup 
 eval_args = Seq2SeqTrainingArguments(
     output_dir=out_dir,
     run_name="test_student_model",# temp directory
@@ -216,10 +221,10 @@ Evaluation and comparison between draft and published best model
 """
 # evaluate the draft model    
 draft_model_hf, draft_feature_extractor, draft_tokenizer = load_model(draft_model_path)
-draft_metrics = run_eval("Test", TEST_CAPTIONS_JSON, draft_model_hf, draft_feature_extractor, draft_tokenizer)
+draft_metrics = run_eval("Test", test_json, draft_model_hf, draft_feature_extractor, draft_tokenizer)
 # evaluate the published best model
 pub_model_hf, pub_feature_extractor, pub_tokenizer = load_model(pub_model_path)
-pub_metrics = run_eval("Test", TEST_CAPTIONS_JSON, pub_model_hf, pub_feature_extractor, pub_tokenizer)    
+pub_metrics = run_eval("Test", test_json, pub_model_hf, pub_feature_extractor, pub_tokenizer)    
 # show metrics for comparision
 print("keys=", draft_metrics.keys)
 print("draft_metrics=", draft_metrics)
