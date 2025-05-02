@@ -6,9 +6,11 @@ import shutil
 from pathlib import Path
 import tempfile
 import yaml
+import numpy as np
 from sklearn.model_selection import train_test_split
 from clearml import Task, Dataset, StorageManager
 from enigmaai.config import Project, ConfigFactory
+from enigmaai import util
 
 def clean_dataset_file_stems(images_path, labels_path):
     """
@@ -53,7 +55,7 @@ images/
 labels/
 
 This task combines data validation, and data preprocessing.
-- Data validation ensure all images have corresponding labels.
+- Data validation/cleaning ensure all images have corresponding labels.
 - Data proprocessing splits the data into train, val, test, 
   and adds offline augmented data into the train set (NOT IMPLEMENTED).
 """
@@ -226,6 +228,50 @@ print('Uploading dataset in the background')
 dataset.upload()
 dataset.finalize()
 
+"""
+Data analysis and visualisation
+"""
+class_names = data_yaml.get("names")
+
+# train dataset EDA
+train_labels_dir = str(train_path.resolve() / "labels")
+class_dist = util.class_dist(train_labels_dir, class_names)
+task.get_logger().report_histogram (
+    title="Dataset Class Distribution",
+    series="Train",
+    values=np.array(class_dist),
+    iteration=0,
+    xlabels=class_names,
+    xaxis="Class",
+    yaxis="Count"
+)
+
+# val dataset EDA
+val_labels_dir = str(val_path.resolve() / "labels")
+class_dist = util.class_dist(val_labels_dir, class_names)
+task.get_logger().report_histogram (
+    title="Dataset Class Distribution",
+    series="Validation",
+    values=np.array(class_dist),
+    iteration=0,
+    xlabels=class_names,
+    xaxis="Class",
+    yaxis="Count"
+)
+
+# test dataset EDA
+test_labels_dir = str(test_path.resolve()  / "labels")
+class_dist = util.class_dist(test_labels_dir, class_names)
+task.get_logger().report_histogram (
+    title="Dataset Class Distribution",
+    series="Test",
+    values=np.array(class_dist),
+    iteration=0,
+    xlabels=class_names,
+    xaxis="Class",
+    yaxis="Count"
+)
+
 task.flush()
 if os.path.exists(working_dir): 
         # NOTE: only split dataset on disk is removed, 
@@ -240,6 +286,3 @@ print("output_dataset_name", dataset.name)
 task.set_parameter("output_dataset_project", dataset.project)
 task.set_parameter("output_dataset_id", dataset.id)
 task.set_parameter("output_dataset_name", dataset.name)
-
-# TODO: log data visualisation
-

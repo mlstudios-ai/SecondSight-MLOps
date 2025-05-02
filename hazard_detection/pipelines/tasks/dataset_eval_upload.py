@@ -3,8 +3,12 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 
 import shutil
+import numpy as np
+import yaml
+from pathlib import Path
 from clearml import Task, Dataset, StorageManager
 from enigmaai.config import Project, ConfigFactory
+from enigmaai import util
 
 """
 Upload zipped YOLO evaluation dataset file from remote URL, extract and upload to ClearML server. 
@@ -27,12 +31,12 @@ task = Task.init(project_name=project_name,
                 reuse_last_task_id=True)
 
 params = {
-    'dataset_url': '',                      # url of a zip file to download from
+    'dataset_url': '',                        # url of a zip file to download from
     'output_dataset_name': 'eval_dataset',    # name for output dataset to upload
 }
 
 task.connect(params)
-task.execute_remotely(queue_name="default")
+task.execute_remotely(queue_name="default") 
 task_params = task.get_parameters()
 print("dataset_eval_upload params=", task_params)
 
@@ -62,6 +66,21 @@ if dataset_path is None:
 
 print("Downloaded to: ", dataset_path)
 
+print("Validating dataset...")
+data_yaml_path = Path(dataset_path) / 'data.yaml'  
+if not data_yaml_path.exists():
+    raise FileNotFoundError("Missing 'data.yaml' from dataset.")
+
+images_path = Path(dataset_path) / "images"
+if not images_path.exists():
+    raise FileNotFoundError("Missing 'images' folder from dataset.")
+
+lables_path = Path(dataset_path) / "labels"
+if not lables_path.exists():
+    raise FileNotFoundError("Missing 'labels' folder from dataset.")
+
+print("Done - dataset has the correct structure.")
+
 # upload dataset to ClearML server
 dataset = Dataset.create(
     dataset_project=project_name, dataset_name=dataset_name
@@ -74,6 +93,22 @@ print('Uploading eval dataset in the background')
 dataset.upload()
 dataset.finalize()
 
+# dataset analysis and visualisation
+with open(data_yaml_path.resolve(), "r") as file:
+    data_yaml = yaml.safe_load(file)
+    class_names = data_yaml.get("names")
+    labels_dir = dataset_path + "/labels/"
+    class_dist = util.class_dist(labels_dir, class_names)
+    task.get_logger().report_histogram (
+        title="Dataset Class Distribution",
+        series="Evaluation",
+        values=np.array(class_dist),
+        iteration=0,
+        xlabels=class_names,
+        xaxis="Class",
+        yaxis="Count"
+    )
+
 task.flush()
 if os.path.exists(dataset_path): 
         shutil.rmtree(dataset_path) # clean up
@@ -81,5 +116,3 @@ if os.path.exists(dataset_path):
 task.set_parameter("output_dataset_project", dataset.project)
 task.set_parameter("output_dataset_id", dataset.id)
 task.set_parameter("output_dataset_name", dataset.name)
-
-# TODO: log data visualisation
