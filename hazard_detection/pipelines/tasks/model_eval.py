@@ -37,7 +37,7 @@ One of eval_dataset_id or eval_dataset_name must be provided to load evaluation 
 """
 params = {
     'eval_dataset_id': '',      # specific version of the dataset. if provided, ignore dataset_name
-    'eval_dataset_name': 'eval_dataset',    # latest registered dataset. used if dataset_id is empty
+    'eval_dataset_name': '',    # latest registered dataset. used if dataset_id is empty
     'draft_model_id': '',       # the unpublished model to evaluate 
     'pub_model_name': 'yolo11n',       # the published model name (also variant) for comparison
     'eval_args': ''             # string format of dictionary of hyperparameters for YOLO.val()
@@ -154,8 +154,8 @@ else:
     
     # log task scalar metrics
     logger = task.get_logger()
-    logger.report_scalar(project.get("eval-metrics-name"), "draft", draft_recall, 1)
-    logger.report_scalar(project.get("eval-metrics-name"), "published", pub_recall, 1)
+    logger.report_scalar(project.get("eval-metrics-name"), "draft", draft_recall, 0)
+    logger.report_scalar(project.get("eval-metrics-name"), "published", pub_recall, 0)
     print("keys=", draft_metrics.keys)
     print("draft_metrics=", draft_metrics.mean_results(), " recall=", draft_recall)
     print("pub_metrics=", pub_metrics.mean_results(), " recall=", pub_recall)
