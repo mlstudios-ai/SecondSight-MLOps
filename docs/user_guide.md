@@ -36,7 +36,8 @@ The following steps are used for an end-to-end pipeline in the **YOLOv11 Pipelin
 ### 5. Run the following to initialise the pipeline
 This could take a while.
 1. Navigate to repo project folder (ie, EnigmaAI folder). It must be in the root project folder.
-2. Run `hazard_detection/pipelines/detection_pipeline.py`
+2. Run clearml-agent daemon --queue "services" --detached 
+3. Run `hazard_detection/pipelines/detection_pipeline.py`
 
 ### 6 Clone the **YOLOv11 Pipeline** for various purposes with the following settings
 
