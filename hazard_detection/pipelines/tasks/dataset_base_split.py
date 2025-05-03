@@ -96,7 +96,7 @@ test_size = float(task_params['General/test_size'])
 
 
 # validate task input params
-if not base_dataset_id and not base_dataset_name and not base_dataset_url:
+if (not base_dataset_id) and (not base_dataset_name) and (not base_dataset_url):
     task.mark_completed(status_message="No dataset provided. Nothing to process.")
     exit(0)
     
@@ -122,7 +122,7 @@ elif base_dataset_url:
                                                  extract_archive=True,
                                                  cache_context=dataset_name,
                                                  force_download=True)    
-    if extract_path is None:
+    if not extract_path:
         raise FileNotFoundError("404", f"Found not found at URL {base_dataset_url}")    
     print(f"Downloaded dataset from:{base_dataset_url} to: {extract_path}") 
 else: # link not provided
