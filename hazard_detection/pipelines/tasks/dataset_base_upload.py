@@ -96,7 +96,7 @@ with open(data_yaml_path.resolve(), "r") as file:
     labels_dir = dataset_path + "/labels/"
     class_dist = util.class_dist(labels_dir, class_names)
     task.get_logger().report_histogram (
-        title="Dataset Class Distribution",
+        title="Class Distribution",
         series="Base (Unsplit)",
         values=np.array(class_dist),
         iteration=0,

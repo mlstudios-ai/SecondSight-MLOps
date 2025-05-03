@@ -237,7 +237,7 @@ class_names = data_yaml.get("names")
 train_labels_dir = str(train_path.resolve() / "labels")
 class_dist = util.class_dist(train_labels_dir, class_names)
 task.get_logger().report_histogram (
-    title="Dataset Class Distribution",
+    title="Class Distribution",
     series="Train",
     values=np.array(class_dist),
     iteration=0,
@@ -250,7 +250,7 @@ task.get_logger().report_histogram (
 val_labels_dir = str(val_path.resolve() / "labels")
 class_dist = util.class_dist(val_labels_dir, class_names)
 task.get_logger().report_histogram (
-    title="Dataset Class Distribution",
+    title="Class Distribution",
     series="Validation",
     values=np.array(class_dist),
     iteration=0,
@@ -263,7 +263,7 @@ task.get_logger().report_histogram (
 test_labels_dir = str(test_path.resolve()  / "labels")
 class_dist = util.class_dist(test_labels_dir, class_names)
 task.get_logger().report_histogram (
-    title="Dataset Class Distribution",
+    title="Class Distribution",
     series="Test",
     values=np.array(class_dist),
     iteration=0,

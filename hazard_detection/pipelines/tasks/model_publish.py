@@ -60,11 +60,12 @@ else:
     
     # validate and publish model
     if draft_recall >= valid_recall: 
+        print(f"Draft model passed validation with recall score {draft_recall} >= {valid_recall}")
         print(f"Publishing draft model name:{draft_model.name} id:{draft_model.id}")
         draft_model.publish()
         print(f"Draft model successfully published. New published model name:{draft_model.name} id:{draft_model.id}")
     else: 
-        print(f"Draft model name:{draft_model.name} id:{draft_model.id} does not meet model validation requirements. Model NOT published.")
+        print(f"Draft model name:{draft_model.name} id:{draft_model.id} failed validation recall >={valid_recall}. Model NOT published.")
    
 # show output    
 print("pub_model_project:", project_name)
