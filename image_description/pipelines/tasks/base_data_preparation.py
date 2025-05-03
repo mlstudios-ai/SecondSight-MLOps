@@ -29,16 +29,15 @@ task = Task.init(project_name=project_name,
                 task_name="step1_desc_basedata_preparation",
                 task_type=Task.TaskTypes.data_processing)
 params = {
-    'base_dataset_id': '26083b24ab0c47219a5e4f3fe026b085',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
+    'base_dataset_id': '', #'26083b24ab0c47219a5e4f3fe026b085',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
     'base_dataset_name': 'base_dataset_zip',               # latest registered dataset
 }
 
 logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
-
-dataset_id = params['base_dataset_id']
-dataset_name = params['base_dataset_name']
+dataset_id = task.get_parameters()['General/base_dataset_id']
+dataset_name = task.get_parameters()['General/base_dataset_name']
 
 # validate task input params
 if not dataset_id and not dataset_name:
@@ -77,7 +76,7 @@ Prepare dataset for training.
 """
 # get image file prefix that has corresponding labels
 images_dir = find_dir_with_files(extract_path, "images")
-labels_dir = find_dir_with_files(extract_path, "images")
+labels_dir = find_dir_with_files(extract_path, "labels")
 logging.info(f"Images located at: {images_dir}")
 logging.info(f"Labels located at: {labels_dir}")
 

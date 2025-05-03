@@ -10,6 +10,8 @@ from transformers import (
     ViTFeatureExtractor,
     AutoTokenizer,
     Seq2SeqTrainingArguments)
+# Force a non-interactive backend
+os.environ['MPLBACKEND'] = 'agg'
 import matplotlib.pyplot as plt
 import torch
 import sys
@@ -45,16 +47,16 @@ logger = task.get_logger()
 params = {
     'split_dataset_id': '',                # specific version of the dataset
     'split_dataset_name': 'Desc_Split_dataset',              # latest registered dataset
-    'base_dataset_id': '26083b24ab0c47219a5e4f3fe026b085',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
+    'base_dataset_id': '', #'26083b24ab0c47219a5e4f3fe026b085',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
     'base_dataset_name': 'base_dataset_zip'
 }
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
 
-dataset_id = params['split_dataset_id']
-dataset_name = params['split_dataset_name']
-img_dataset_id = params['base_dataset_id']
-img_dataset_name = params['base_dataset_name']
+dataset_id = task.get_parameters()['General/split_dataset_id']
+dataset_name = task.get_parameters()['General/split_dataset_name']
+img_dataset_id = task.get_parameters()['General/base_dataset_id']
+img_dataset_name = task.get_parameters()['General/base_dataset_name']
 # validate task input params
 if not dataset_id and not dataset_name:
     task.mark_completed(status_message="No dataset provided. Nothing to train on. Ensure to execute task 5")
@@ -125,7 +127,7 @@ Student model training configuration and set up
 STUDENT_CONFIG = {"encoder": "google/vit-base-patch16-224-in21k", "decoder": "distilgpt2"}
 train_batch_size = 16
 eval_batch_size = 16
-num_epochs = 1 
+num_epochs = 10 
 lr = 1e-4
 weight_decay=0.01
 max_target_len = 64
@@ -190,7 +192,8 @@ training_args = Seq2SeqTrainingArguments(
     metric_for_best_model="cider", # pick the checkpoint with highest cider
     greater_is_better=True,
     report_to=["tensorboard"],    # enable TensorBoard
-    logging_dir=tensorboard_dir
+    logging_dir=tensorboard_dir,
+    dataloader_pin_memory=False
 )
 trainer = CleanSeq2SeqTrainer(
     model=model,
@@ -246,5 +249,6 @@ output_model = OutputModel(
 )
 # Upload the ZIP as the model weights
 output_model.update_weights(weights_filename=zip_path)
+task.set_parameter("General/output_model_id", output_model.id)
 print("Registered model id:", output_model.id)
 logging.info("Student training on ClearML complete.")

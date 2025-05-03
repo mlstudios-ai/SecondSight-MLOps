@@ -51,7 +51,7 @@ task = Task.init(project_name=project_name,
 params = {
     'dataset_id': '',                # specific version of the dataset
     'dataset_name': 'Desc_Eval_Dataset',              # latest registered dataset
-    'eval_dataset_id': 'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
+    'eval_dataset_id': '', #'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
     'eval_dataset_name': 'eval_dataset_zip'
 }
 
@@ -59,10 +59,10 @@ logger = task.get_logger()
 task.connect(params)
 task.execute_remotely(queue_name="desc_preparation")
 
-dataset_id = params['dataset_id']
-dataset_name = params['dataset_name']
-img_dataset_id = params['eval_dataset_id']
-img_dataset_name = params['eval_dataset_name']
+dataset_id = task.get_parameters()['General/dataset_id']
+dataset_name = task.get_parameters()['General/dataset_name']
+img_dataset_id = task.get_parameters()['General/eval_dataset_id']
+img_dataset_name = task.get_parameters()['General/eval_dataset_name']
 # validate task input params
 if not dataset_id and not dataset_name:
     task.mark_completed(status_message="No mapping dataset provided. Nothing to evaluate on. Ensure to execute task 2")

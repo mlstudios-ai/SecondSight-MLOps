@@ -39,11 +39,11 @@ task = Task.init(project_name=project_name,
                 task_name="step7_desc_model_evaluation", 
                 task_type=Task.TaskTypes.qc)
 params = {
-    'dataset_id': 'f6865cde77d843eb93829a268b2adeaf',                # specific version of the eval caption dataset
-    'dataset_name': 'Desc_Caption_EvalDataset ',              # latest registered dataset
-    'eval_dataset_id': 'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
+    'dataset_id': '', #'f6865cde77d843eb93829a268b2adeaf',                # specific version of the eval caption dataset
+    'dataset_name': 'Desc_Caption_EvalDataset',              # latest registered dataset
+    'eval_dataset_id': '', #'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
     'eval_dataset_name': 'eval_dataset_zip',
-    'desc_draft_model_id': '36939d5f9c7a41a2b75ee2110e155144',       # the unpublished model to evaluate 
+    'desc_draft_model_id': '', #'36939d5f9c7a41a2b75ee2110e155144',       # the unpublished model to evaluate 
     'desc_pub_model_name': 'student_desc_model',       # the published model name for comparison
 }
 task.connect(params)
@@ -51,12 +51,12 @@ task.execute_remotely(queue_name="desc_preparation")
 task_params = task.get_parameters()
 logging.info("model_eval params=", task_params)
 
-dataset_id = params['dataset_id']
-dataset_name = params['dataset_name']
-img_dataset_id = params['eval_dataset_id']
-img_dataset_name = params['eval_dataset_name']
-draft_model_id = params['desc_draft_model_id']
-pub_model_name = params["desc_pub_model_name"]
+dataset_id = task.get_parameters()['General/dataset_id']
+dataset_name = task.get_parameters()['General/dataset_name']
+img_dataset_id = task.get_parameters()['General/eval_dataset_id']
+img_dataset_name = task.get_parameters()['General/eval_dataset_name']
+draft_model_id = task.get_parameters()['General/desc_draft_model_id']
+pub_model_name = task.get_parameters()['General/desc_pub_model_name']
 
 # validate task input params
 if not dataset_id and not dataset_name:
@@ -128,10 +128,12 @@ if not test_json or not images_dir:
     exit(0)
 # no model provided for evaluation
 if not draft_model_id:
-    raise ValueError("Missing new/draft model. Please provide draft_model_id.")
+    task.mark_completed(status_message="Missing new/draft model. Please provide draft_model_id.")
+    exit(0)
 # Mandatory input param
 if not pub_model_name:
-    raise ValueError("Missing model. Please provide pub_model_name.")
+    task.mark_completed(status_message="Missing model. Please provide pub_model_name.")
+    exit(0)
 
 # fetch the draft model path for evaluation    
 draft_model = Model(model_id=draft_model_id)    

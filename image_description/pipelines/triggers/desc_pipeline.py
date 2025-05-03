@@ -33,6 +33,8 @@ the ClearML WebUI:
 Upload Base Dataset - upload base dataset. This will trigger default pipeline to run in CD phase (NOT IMPLEMENTED)
 Upload Evaluation Dataset - upload base dataset. This will trigger default pipeline to run in CD phase (NOT IMPLEMENTED)
 """
+import os
+os.chdir("/content/AIS_Project/")
 
 # get project configurations
 project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
@@ -43,13 +45,13 @@ pipeline_name = "VLMPipeline"
 pipe = PipelineController(name=pipeline_name, 
                           project=project_name, 
                           add_pipeline_tags=False)
-pipe.set_default_execution_queue("desc_pipeline")
-
+pipe.set_default_execution_queue("desc_preparation")
+#pipe._task.set_script(working_dir="/content/AIS_Project/image_description")
 """ 
 STEP 1: Create Image-Label Mapping dataset from Base dataset under Detection Project
 """
 # intial dataset to download. If none provided, task will complete without upload
-base_dataset_id = ""
+base_dataset_id = "26083b24ab0c47219a5e4f3fe026b085"
 base_dataset_name = "base_dataset_zip"
 
 pipe.add_parameter("base_dataset_id", base_dataset_id, "latest of base_dataset_zip id")
@@ -65,7 +67,8 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="step1_desc_basedata_preparation",
     parameter_override={
-        "General/dataset_id": "${pipeline.base_dataset_id}"
+        "General/base_dataset_id": "${pipeline.base_dataset_id}",
+        "General/base_dataset_name": "${pipeline.base_dataset_name}"
         },
     pre_execute_callback=pre_base_dataprep_callback,
     post_execute_callback=post_base_dataprep_callback
@@ -76,8 +79,8 @@ STEP 2: Create Image-Label Mapping dataset from Eval dataset under Detection Pro
 eval_dataset_id = ""
 eval_dataset_name = "eval_dataset_zip"
 
-pipe.add_parameter("eval_dataset_id", eval_dataset_id, "latest of eval_dataset_zip id")
-pipe.add_parameter("eval_dataset_name", eval_dataset_name, "latest of eval_dataset_zip name")
+pipe.add_parameter("eval_dataset_id", "", "latest of eval_dataset_zip id")
+pipe.add_parameter("eval_dataset_name", "eval_dataset_zip", "latest of eval_dataset_zip name")
 
 def pre_base_dataprep_callback(pipeline, node, param_override) -> bool:    
     print("Cloning step2_desc_testdata_preparation id={}".format(node.base_task_id))    
@@ -90,18 +93,20 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="step2_desc_testdata_preparation",
     parameter_override={
-        "General/dataset_id": "${pipeline.eval_dataset_id}"
+        "General/eval_dataset_id": "${pipeline.eval_dataset_id}",
+        "General/eval_dataset_name": "${pipeline.eval_dataset_name}"
         },
     pre_execute_callback=pre_base_dataprep_callback,
     post_execute_callback=post_base_dataprep_callback
 )
+
 
 """ 
 STEP 3: Train Data Reference description generation
 """
 dataset_id = ""
 dataset_name = "Desc_Base_Dataset"
-base_dataset_id = ''
+base_dataset_id = '26083b24ab0c47219a5e4f3fe026b085'
 base_dataset_name = "base_dataset_zip"
 
 pipe.add_parameter("dataset_id", dataset_id, "latest id of base data img-label mapping")
@@ -122,7 +127,7 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="step3_desc_basecaption_generation",
     parameter_override={
-        "General/dataset_id": "${pipeline.dataset_id}",
+        "General/dataset_id": "${BaseData_Mapping.parameters.General/output_dataset_id}",
         "General/dataset_name": "${pipeline.dataset_name}",
         "General/base_dataset_id": "${pipeline.base_dataset_id}", 
         "General/base_dataset_name": "${pipeline.base_dataset_name}"
@@ -139,10 +144,10 @@ dataset_name = "Desc_Eval_Dataset"
 eval_dataset_id = ''
 eval_dataset_name = "eval_dataset_zip"
 
-pipe.add_parameter("dataset_id", dataset_id, "latest id of eval data img-label mapping from step 2")
-pipe.add_parameter("dataset_name", dataset_name, "latest of eval data img-label name from step 2")
-pipe.add_parameter("eval_dataset_id", eval_dataset_id, "latest of eval_dataset_zip id")
-pipe.add_parameter("eval_dataset_name", eval_dataset_name, "latest of eval_dataset_zip name")
+pipe.add_parameter("dataset_id", "", "latest id of eval data img-label mapping from step 2")
+pipe.add_parameter("dataset_name", "Desc_Eval_Dataset", "latest of eval data img-label name from step 2")
+pipe.add_parameter("eval_dataset_id", "", "latest of eval_dataset_zip id")
+pipe.add_parameter("eval_dataset_name", "eval_dataset_zip", "latest of eval_dataset_zip name")
 
 def pre_processing_callback(pipeline, node, param_override) -> bool:
     print("Cloning step4_desc_evalcaption_generation id={}".format(node.base_task_id))    
@@ -153,11 +158,11 @@ def post_processing_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="eval_desc_generation",
-    parents=["EvalData_Mapping"],
+    parents=["EvalData_Mapping", "base_desc_generation"],
     base_task_project=project_name,
     base_task_name="step4_desc_evalcaption_generation",
     parameter_override={
-        "General/dataset_id": "${pipeline.dataset_id}",
+        "General/dataset_id": "${EvalData_Mapping.parameters.General/output_dataset_id}",
         "General/dataset_name": "${pipeline.dataset_name}",
         "General/eval_dataset_id": "${pipeline.eval_dataset_id}", 
         "General/eval_dataset_name": "${pipeline.eval_dataset_name}"
@@ -169,12 +174,10 @@ pipe.add_step(
 STEP 5: Splitting Train Dataset
 """
 # it will get dataset_id from step 3, if not provided, this will be used
-params = {
-    'cap_dataset_id': '',
-    'cap_dataset_name': 'Desc_Caption_BaseDataset',
-    'random_state': 42,
-    'val_size': 0.2,
-}
+cap_dataset_id= ''
+cap_dataset_name= 'Desc_Caption_BaseDataset'
+random_state= 42
+val_size=0.2
 pipe.add_parameter("cap_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If empty, use the latest of base caption dataset id")
 pipe.add_parameter("cap_dataset_name", "Desc_Caption_BaseDataset", "latest of base caption dataset_name")
 pipe.add_parameter("random_state", 42, "Specify random state for consistent training")
@@ -195,7 +198,7 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="step5_desc_split_data",
     parameter_override={
-        "General/cap_dataset_id": "${pipeline.cap_dataset_id}", 
+        "General/cap_dataset_id": "${base_desc_generation.parameters.General/output_dataset_id}", 
         "General/cap_dataset_name": "${pipeline.cap_dataset_name}",
         "General/output_dataset_name": pipe.get_parameters()["split_dataset_name"],
         "General/random_state": pipe.get_parameters()["random_state"],
@@ -220,14 +223,14 @@ def load_hyp_config(model_variant) -> dict:
 """
 split_dataset_id= '',               
 split_dataset_name ='Desc_Split_dataset'            
-base_dataset_id = ''
+base_dataset_id = '26083b24ab0c47219a5e4f3fe026b085'
 base_dataset_name = 'base_dataset_zip'
 
 # model training settings
 pipe.add_parameter("split_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore split_dataset_name")
-pipe.add_parameter("split_dataset_name", split_dataset_name, "split data name")
-pipe.add_parameter("base_dataset_id", base_dataset_id, "latest of base_dataset_zip id")
-pipe.add_parameter("base_dataset_name", base_dataset_name, "latest of base_dataset_zip name")
+pipe.add_parameter("split_dataset_name", "Desc_Split_dataset", "split data name")
+pipe.add_parameter("base_dataset_id", "26083b24ab0c47219a5e4f3fe026b085", "latest of base_dataset_zip id")
+pipe.add_parameter("base_dataset_name", "base_dataset_zip", "latest of base_dataset_zip name")
 
 def pre_training_callback(pipeline, node, param_override) -> bool:  
     print("Cloning step6_desc_model_training id={}".format(node.base_task_id))    
@@ -243,7 +246,7 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="step6_desc_model_training",
     parameter_override={
-        "General/split_dataset_id": "${pipeline.split_dataset_id}",   
+        "General/split_dataset_id": "${train_val_splitting.parameters.General/output_dataset_id}",# "${pipeline.split_dataset_id}",   
         "General/split_dataset_name": "${pipeline.split_dataset_name}", 
         "General/base_dataset_id": "${pipeline.base_dataset_id}", 
         "General/base_dataset_name": "${pipeline.base_dataset_name}"},
@@ -272,12 +275,12 @@ eval_dataset_name= 'eval_dataset_zip',
 desc_draft_model_id= '',       # the unpublished model to evaluate 
 desc_pub_model_name= 'student_desc_model'
 
-pipe.add_parameter("eval_dataset_id", eval_dataset_id, "Overitten if previous task is not skipped. If set, ignore eval_dataset_name")
-pipe.add_parameter("eval_dataset_name", eval_dataset_name, "latest eval image dataset name")
-pipe.add_parameter("dataset_id", dataset_id, "latest eval caption dataset name")
-pipe.add_parameter("dataset_name", dataset_name, "latest eval caption dataset name")
-pipe.add_parameter("desc_draft_model_id", desc_draft_model_id, "latest trained model in draft state")
-pipe.add_parameter("desc_pub_model_name", desc_pub_model_name, "latest best model in published state")
+pipe.add_parameter("eval_dataset_id", "", "Overitten if previous task is not skipped. If set, ignore eval_dataset_name")
+pipe.add_parameter("eval_dataset_name", "eval_dataset_zip", "latest eval image dataset name")
+pipe.add_parameter("dataset_id", "", "latest eval caption dataset name")
+pipe.add_parameter("dataset_name", "Desc_Caption_EvalDataset", "latest eval caption dataset name")
+pipe.add_parameter("desc_draft_model_id", "", "latest trained model in draft state")
+pipe.add_parameter("desc_pub_model_name", "student_desc_model", "latest best model in published state")
 
 def pre_eval_callback(pipeline, node, param_override) -> bool:    
     print("Cloning step7_desc_model_evaluation id={}".format(node.base_task_id))      # param validation check
@@ -289,15 +292,15 @@ def post_eval_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="desc_model_evaluation",
-    parents=["desc_model_training", "eval_desc_generation"],
+    parents=["eval_desc_generation", "desc_model_training"],
     base_task_project=project_name,
     base_task_name="step7_desc_model_evaluation",
     parameter_override={
-        "General/dataset_id": "${pipeline.dataset_id}", 
+        "General/dataset_id": "${eval_desc_generation.parameters.General/output_dataset_id}", 
         "General/dataset_name": "${pipeline.dataset_name}",
         "General/eval_dataset_id": "${pipeline.eval_dataset_id}", 
         "General/eval_dataset_name": "${pipeline.eval_dataset_name}",
-        "General/draft_model_id": "${desc_model_training.parameters.General/output_model_id}",
+        "General/desc_draft_model_id": "${desc_model_training.parameters.General/output_model_id}",
         "General/pub_model_name": "${pipeline.desc_pub_model_name}"
     },
     pre_execute_callback=pre_eval_callback,
@@ -321,15 +324,16 @@ pipe.add_step(
     base_task_project=project_name,
     base_task_name="step8_desc_model_publish",
     parameter_override={
-        "General/draft_model_id": "${desc_model_evaluation.parameters.General/best_model_id}"
+        "General/desc_draft_model_id": "${desc_model_evaluation.parameters.General/best_model_id}"
     },
     pre_execute_callback=pre_pub_callback,
     post_execute_callback=post_pub_callback
 )
+
 remote_execution = project.get("pipeline-remote-execution")
 if remote_execution:
     print(f"Executing '{pipeline_name}' pipeline remotely")
-    pipe.start()
+    pipe.start(queue = "desc_preparation")
 else:
     print(f"Executing '{pipeline_name}' pipeline locally")
     pipe.start_locally(run_pipeline_steps_locally=True)
