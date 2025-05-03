@@ -53,12 +53,12 @@ STEP 1.1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-# base_dataset_url = ""       # default for no uploading
-base_dataset_url = project.get("base-dataset-url")
-base_dataset_name = "base_dataset"
+base_dataset_url = ""       # default for no uploading
+base_dataset_name = ""      # default for no uploading (and splitting in the next task if base_dataset_id is empty)
+# base_dataset_url = project.get("base-dataset-url")
+# base_dataset_name = "base_dataset"
 # base_dataset_url = "/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/mini"
 # base_dataset_name = "base_update_dataset"
-# base_dataset_name = ""      # default for no uploading (and splitting in the next task if base_dataset_id is empty)
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
 pipe.add_parameter("base_dataset_name", base_dataset_name, "Name of the dataset to upload to the server. Also used for the next step.")
 
@@ -195,8 +195,8 @@ STEP 1.2: Upload eval dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-eval_dataset_url = project.get("eval-dataset-url")
-# eval_dataset_url = ""       # default for no uploading
+eval_dataset_url = ""       # default for no uploading
+# eval_dataset_url = project.get("eval-dataset-url")
 pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
 pipe.add_parameter("eval_dataset_name", "eval_dataset", "Name of the dataset to upload to the server. Also used for the next step.")
 

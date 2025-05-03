@@ -1,6 +1,6 @@
-    epochs: 5
+    epochs: 30
     imgsz: 640
-    batch: 8
+    batch: 12
     lr0: 0.0006
     warmup_epochs: 3
     patience: 10
