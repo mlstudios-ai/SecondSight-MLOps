@@ -1,6 +1,7 @@
 import os
 from typing import List
 import torch
+from pathlib import Path
 
 def get_device_name() -> str:
     """
@@ -28,11 +29,13 @@ def class_dist(labels_dir: List[str], classes: List[str]) -> List[int]:
     Returns:
         List[int]: Class counts in the order of `classes` parameter
     """
+    labels_dir = Path(labels_dir)
     class_counts = [0] * len(classes)
-
-    for label_file in os.listdir(labels_dir):
-        if label_file.endswith('.txt'):
-            with open(os.path.join(labels_dir, label_file)) as f:
+    
+    if labels_dir.exists():
+        label_files = list(labels_dir.glob("*.txt"))
+        for label_file in label_files:
+            with open(label_file, "r") as f:
                 for line in f:
                     class_id = int(line.split()[0])
                     class_counts[class_id] += 1
