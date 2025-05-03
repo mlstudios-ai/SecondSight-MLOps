@@ -60,7 +60,7 @@ dataset_path = StorageManager.get_local_copy(remote_url=dataset_url,
                                                 cache_context=dataset_name,
                                                 force_download=True)
 
-if dataset_path is None:
+if not dataset_path:
     # Error: Assume file not found (404 http status code)
     raise FileNotFoundError("404", f"Found not found at URL {dataset_url}") 
 
@@ -100,7 +100,7 @@ with open(data_yaml_path.resolve(), "r") as file:
     labels_dir = dataset_path + "/labels/"
     class_dist = util.class_dist(labels_dir, class_names)
     task.get_logger().report_histogram (
-        title="Dataset Class Distribution",
+        title="Class Distribution",
         series="Evaluation",
         values=np.array(class_dist),
         iteration=0,

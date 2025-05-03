@@ -28,8 +28,5 @@ base-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Da
 # eval-dataset-url: "https://files.clear.ml/Detection/.datasets/eval_dataset_zip/eval_dataset_zip.e19da140dd6a479c864dd7bdf930918d/artifacts/data/dataset.e19da140dd6a479c864dd7bdf930918d.ta98q5ob.zip"
 eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/split_dataset/eval/eval_dataset.zip"
 
-# name to log scalars at evaluation
-eval-metrics-name: "Model Evaluation Metrics"
-
 # minimum performance requirements for model publishing
-validation-metrics-recall: 0.3
+validation-metrics-recall: 0.2

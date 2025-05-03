@@ -5,10 +5,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 from clearml import Task, Dataset, Model
 from pathlib import Path
 import yaml
+import numpy as np
 import tempfile
 from ultralytics import YOLO
 from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
+from enigmaai import util
 
 """
 Training YOLOV11 model from an existing model or from scratch using based model from 
@@ -67,7 +69,7 @@ model_variant = task_params["General/model_variant"]
 model_hyps_str = task_params["General/model_hyps"]
         
 # validate task input params
-if not dataset_id and not dataset_name:
+if (not dataset_id) and (not dataset_name):
     task.mark_completed(status_message="No dataset provided. Nothing to train on.")
     exit(0)
     
@@ -163,8 +165,53 @@ task.upload_artifact(name=f"{model_variant}_hyp_config", artifact_object=model_h
 result_file = working_dir / model_variant / "results.csv"
 task.upload_artifact(name="results", artifact_object=result_file)
 result_model = working_dir / model_variant / "weights" / "best.pt"
-task.upload_artifact(name=f"{model_variant}", artifact_object=result_model)
-        
+task.upload_artifact(name=f"{model_variant}", artifact_object=result_model) 
+
+"""
+Data analysis and visualisation
+"""
+class_names = data_yaml.get("names")
+dataset_path = Path(extract_path)
+
+# train dataset EDA
+train_labels_dir = str(dataset_path.resolve() / "train" / "labels")
+class_dist = util.class_dist(train_labels_dir, class_names)
+task.get_logger().report_histogram (
+    title="Class Distribution",
+    series="Train",
+    values=np.array(class_dist),
+    iteration=0,
+    xlabels=class_names,
+    xaxis="Class",
+    yaxis="Count"
+)
+
+# val dataset EDA
+val_labels_dir = str(dataset_path.resolve() / "val" / "labels")
+class_dist = util.class_dist(val_labels_dir, class_names)
+task.get_logger().report_histogram (
+    title="Class Distribution",
+    series="Validation",
+    values=np.array(class_dist),
+    iteration=0,
+    xlabels=class_names,
+    xaxis="Class",
+    yaxis="Count"
+)
+
+# test dataset EDA
+test_labels_dir = str(dataset_path.resolve() / "test" / "labels")
+class_dist = util.class_dist(test_labels_dir, class_names)
+task.get_logger().report_histogram (
+    title="Class Distribution",
+    series="Test",
+    values=np.array(class_dist),
+    iteration=0,
+    xlabels=class_names,
+    xaxis="Class",
+    yaxis="Count"
+)
+
 # output info
 output_model = task.models.output[0] # get the most recent model. there should be only 1
 task.set_parameter("output_model_project", project_name)

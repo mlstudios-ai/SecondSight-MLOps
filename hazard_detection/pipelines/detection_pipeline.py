@@ -53,10 +53,12 @@ STEP 1.1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-# base_dataset_url = project.get("base-dataset-url")
 base_dataset_url = ""       # default for no uploading
-# base_dataset_name = "base_dataset"
 base_dataset_name = ""      # default for no uploading (and splitting in the next task if base_dataset_id is empty)
+# base_dataset_url = project.get("base-dataset-url")
+# base_dataset_name = "base_dataset"
+# base_dataset_url = "/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/mini"
+# base_dataset_name = "base_update_dataset"
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
 pipe.add_parameter("base_dataset_name", base_dataset_name, "Name of the dataset to upload to the server. Also used for the next step.")
 
@@ -86,10 +88,12 @@ STEP 2: Dataset processing
 
 # processing starting dataset for pipeline
 # it will get dataset_id from step 1, if not provided, this will be used
+split_dataset_name = "dataset"
+# split_dataset_name = "update_dataset"
 pipe.add_parameter("base_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If empty, use the lastest of base_dataset_name")
 pipe.add_parameter("split_random_state", 42, "Specify random state for consistent training")
-pipe.add_parameter("split_val_size", 0.30, "Validation split. Percentage of entire dataset.")
-pipe.add_parameter("split_dataset_name", "dataset", "Name of the dataset to uppload the outout to the server. Also used for the next step.")
+pipe.add_parameter("split_val_size", 0.20, "Validation split. Percentage of entire dataset.")
+pipe.add_parameter("split_dataset_name", split_dataset_name, "Name of the dataset to uppload the outout to the server. Also used for the next step.")
 
 def pre_processing_callback(pipeline, node, param_override) -> bool:
     print("Cloning dataset_processing id={}".format(node.base_task_id))    
@@ -136,7 +140,7 @@ def load_hyp_config(model_variant) -> dict:
 # model training settings
 pipe.add_parameter("model_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore model_dataset_name")
 pipe.add_parameter("model_id", "", "(Optional) Pre-trained model from the server. If not provided, use default based on model_name")
-pipe.add_parameter("model_name", "", "(Optional) Latest pre-trained model from the server. If not provided, use default based on model_variant")
+pipe.add_parameter("model_name", "yolo11n", "(Optional) Latest pre-trained model from the server. If not provided, use default based on model_variant")
 pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant from Ultralytics. Also saved as model_name for future updates.")
 pipe.add_parameter("model_hyps", "", "Dictionary of YOLO.train() input params. Defaults from model variant config file")
 
@@ -191,8 +195,8 @@ STEP 1.2: Upload eval dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-# eval_dataset_url = project.get("eval-dataset-url")
 eval_dataset_url = ""       # default for no uploading
+# eval_dataset_url = project.get("eval-dataset-url")
 pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
 pipe.add_parameter("eval_dataset_name", "eval_dataset", "Name of the dataset to upload to the server. Also used for the next step.")
 
