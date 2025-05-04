@@ -11,7 +11,7 @@ import os
 import logging
 import re
 import pandas as pd
-from data_exploration import load_data, load_config
+from image_description.notebooks.POC.data_exploration import load_data, load_config
 
 
 # Load configuration of path variables

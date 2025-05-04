@@ -43,7 +43,7 @@ params = {
     'dataset_name': 'Desc_Caption_EvalDataset',              # latest registered dataset
     'eval_dataset_id': '', #'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
     'eval_dataset_name': 'eval_dataset_zip',
-    'desc_draft_model_id': '', #'36939d5f9c7a41a2b75ee2110e155144',       # the unpublished model to evaluate 
+    'desc_draft_model_id': '1bb143b453ad418eb5b9c650e79ea5ec', #'36939d5f9c7a41a2b75ee2110e155144',       # the unpublished model to evaluate 
     'desc_pub_model_name': 'student_desc_model',       # the published model name for comparison
 }
 task.connect(params)
@@ -139,7 +139,7 @@ if not pub_model_name:
 draft_model = Model(model_id=draft_model_id)    
 print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
 draft_model_path = draft_model.get_local_copy(raise_on_error=True)
-print(f"Downloaded published model name: {draft_model.name} id:{draft_model.id} to: {draft_model_path}")
+print(f"Downloaded draft model name: {draft_model.name} id:{draft_model.id} to: {draft_model_path}")
   
 # fetch the published best model path
 server_models = Model.query_models(model_name=pub_model_name, only_published=True)
@@ -148,7 +148,7 @@ if not server_models:
     print(f"No published model found, use draft as the best model name:{draft_model.name} id:{draft_model.id}")
     pub_model_path = best_model.get_local_copy(raise_on_error=True)
     print(f"Downloaded draft model name: {best_model.name} id:{best_model.id} to: {pub_model_path}")
-else:    
+else:
     # best published model found
     pub_model = server_models[0] # get the most recent one
     task.set_parameter("pub_model_id", pub_model.id)
