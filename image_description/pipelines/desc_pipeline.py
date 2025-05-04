@@ -51,7 +51,7 @@ pipe.set_default_execution_queue("desc_preparation")
 STEP 1: Create Image-Label Mapping dataset from Base dataset under Detection Project
 """
 # intial dataset to download. If none provided, task will complete without upload
-base_dataset_id = "26083b24ab0c47219a5e4f3fe026b085"
+base_dataset_id = ""
 base_dataset_name = "base_dataset_zip"
 
 pipe.add_parameter("base_dataset_id", base_dataset_id, "latest of base_dataset_zip id")
@@ -106,7 +106,7 @@ STEP 3: Train Data Reference description generation
 """
 dataset_id = ""
 dataset_name = "Desc_Base_Dataset"
-base_dataset_id = '26083b24ab0c47219a5e4f3fe026b085'
+base_dataset_id = ''
 base_dataset_name = "base_dataset_zip"
 
 pipe.add_parameter("dataset_id", dataset_id, "latest id of base data img-label mapping")
@@ -223,13 +223,13 @@ def load_hyp_config(model_variant) -> dict:
 """
 split_dataset_id= '',               
 split_dataset_name ='Desc_Split_dataset'            
-base_dataset_id = '26083b24ab0c47219a5e4f3fe026b085'
+base_dataset_id = ''
 base_dataset_name = 'base_dataset_zip'
 
 # model training settings
 pipe.add_parameter("split_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore split_dataset_name")
 pipe.add_parameter("split_dataset_name", "Desc_Split_dataset", "split data name")
-pipe.add_parameter("base_dataset_id", "26083b24ab0c47219a5e4f3fe026b085", "latest of base_dataset_zip id")
+pipe.add_parameter("base_dataset_id", "", "latest of base_dataset_zip id")
 pipe.add_parameter("base_dataset_name", "base_dataset_zip", "latest of base_dataset_zip name")
 
 def pre_training_callback(pipeline, node, param_override) -> bool:  
