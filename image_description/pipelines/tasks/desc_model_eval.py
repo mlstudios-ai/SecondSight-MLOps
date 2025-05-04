@@ -39,11 +39,11 @@ task = Task.init(project_name=project_name,
                 task_name="step7_desc_model_evaluation", 
                 task_type=Task.TaskTypes.qc)
 params = {
-    'dataset_id': '', #'f6865cde77d843eb93829a268b2adeaf',                # specific version of the eval caption dataset
+    'dataset_id': '',                 # specific version of the eval caption dataset
     'dataset_name': 'Desc_Caption_EvalDataset',              # latest registered dataset
-    'eval_dataset_id': '', #'e19da140dd6a479c864dd7bdf930918d',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
+    'eval_dataset_id': '',      # specific version of the dataset
     'eval_dataset_name': 'eval_dataset_zip',
-    'desc_draft_model_id': '1bb143b453ad418eb5b9c650e79ea5ec', #'36939d5f9c7a41a2b75ee2110e155144',       # the unpublished model to evaluate 
+    'desc_draft_model_id': '',        # the unpublished model to evaluate 
     'desc_pub_model_name': 'student_desc_model',       # the published model name for comparison
 }
 task.connect(params)
