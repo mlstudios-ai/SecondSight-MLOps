@@ -47,7 +47,7 @@ logger = task.get_logger()
 params = {
     'split_dataset_id': '',                # specific version of the dataset
     'split_dataset_name': 'Desc_Split_dataset',              # latest registered dataset
-    'base_dataset_id': '', #'26083b24ab0c47219a5e4f3fe026b085',#'2231b5b121924ed684d6560cf6839619',     # specific version of the dataset
+    'base_dataset_id': '',     # specific version of the dataset
     'base_dataset_name': 'base_dataset_zip'
 }
 task.connect(params)
