@@ -6,15 +6,15 @@ from pathlib import Path
 import yaml
 from clearml import Task
 from clearml.automation import PipelineController
-from enigmaai.config import Project, Config, ConfigFactory
+from enigmaai.config import Project, ConfigFactory
 
 """
-YOLOv11 model end-to-end MLOps pipeline. The pipeline is designed to cater for flexibilities 
-of different needs at different point of the pipeline. 
+YOLOv11 model end-to-end MLOps pipeline. The pipeline is designed to cater for flexibilities of different needs at 
+different point of the pipeline. 
 
-Sometimes user may want to execute a task for specific purposes and then continue with the pipeline.
-Some steps can be skipped if the minimum parameters are not provided as specified pipeline parameter 
-descriptions (refer to the corresponding tasks for more info).
+Sometimes user may want to execute a task for specific purposes and then continue with the pipeline. Some steps can 
+be skipped if the minimum parameters are not provided as specified in the pipeline parameter descriptions (refer to 
+the corresponding tasks for more info).
 
 Pipeline parameter settings can be set in each new run for various purposes as follow:
 
@@ -23,8 +23,17 @@ Pipeline parameter settings can be set in each new run for various purposes as f
 3. Skip steps 1 & 2, use processed dataset and start from step 3: model training
 4. Skip steps 1, 2, & 3, use existing model as the new model for evaluation, starts from step 4: model evaluation
 
-The above scenarios are designed to reduce execution time and resources requirements, reduce duplications, and 
-allows adjustment to various circumstances.
+The above scenarios are designed to reduce execution time, resources requirements, duplications, and allows adjustment 
+to various circumstances. Note that you can not skip model evaluation - this leads to publishing the model. If this is 
+not a desire behaviour, use the task Model Evaluation from the WebUI instead of the pipeline.
+
+IMPORTANT: by default, it will use the base_dataset and eval_dataset existing on the server, presuming they are already 
+uploaded. If those datasets are not uploaded, please put in the base_dataset_url and/or eval_dataset_url accordingly.
+Alternatively, before running the pipeline with default settings, upload the dataset using the following tasks from
+the ClearML WebUI:
+
+Upload Base Dataset - upload base dataset. This will trigger default pipeline to run in CD phase (NOT IMPLEMENTED)
+Upload Evaluation Dataset - upload base dataset. This will trigger default pipeline to run in CD phase (NOT IMPLEMENTED)
 """
 
 # get project configurations
@@ -40,37 +49,18 @@ pipe = PipelineController(name=pipeline_name,
 pipe.set_default_execution_queue("default")
 
 """ 
-STEP 1.1: Upload eval dataset
+STEP 1.1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-eval_dataset_url = project.get("eval-dataset-url")
-pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
-
-def pre_eval_upload_callback(pipeline, node, param_override) -> bool:    
-    print("Cloning upload_eval_dataset id={}".format(node.base_task_id))    
-    return True
-
-def post_eval_upload_callback(pipeline, node) -> None:   
-    print("Completed upload_eval_dataset id={} {}".format(node.base_task_id, node.executed))    
-    return
-
-pipe.add_step(
-    name="upload_eval_dataset",
-    base_task_project=project_name,
-    base_task_name="Upload Evaluation Dataset",
-    parameter_override={"General/dataset_url": "${pipeline.eval_dataset_url}"},
-    pre_execute_callback=pre_eval_upload_callback,
-    post_execute_callback=post_eval_upload_callback
-)
-
-""" 
-STEP 1.2: Load base dataset
-"""
-
-# intial dataset to download. If none provided, task will complete without upload
-base_dataset_url = project.get("base-dataset-url")
+base_dataset_url = ""       # default for no uploading
+base_dataset_name = ""      # default for no uploading (and splitting in the next task if base_dataset_id is empty)
+# base_dataset_url = project.get("base-dataset-url")
+# base_dataset_name = "base_dataset"
+# base_dataset_url = "/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/mini"
+# base_dataset_name = "base_update_dataset"
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
+pipe.add_parameter("base_dataset_name", base_dataset_name, "Name of the dataset to upload to the server. Also used for the next step.")
 
 def pre_base_upload_callback(pipeline, node, param_override) -> bool:    
     print("Cloning upload_base_dataset id={}".format(node.base_task_id))    
@@ -84,7 +74,10 @@ pipe.add_step(
     name="upload_base_dataset",
     base_task_project=project_name,
     base_task_name="Upload Base Dataset",
-    parameter_override={"General/dataset_url": "${pipeline.base_dataset_url}"},
+    parameter_override={
+        "General/dataset_url": "${pipeline.base_dataset_url}",
+        "General/output_dataset_name": "${pipeline.base_dataset_name}"
+        },
     pre_execute_callback=pre_base_upload_callback,
     post_execute_callback=post_base_upload_callback
 )
@@ -95,10 +88,12 @@ STEP 2: Dataset processing
 
 # processing starting dataset for pipeline
 # it will get dataset_id from step 1, if not provided, this will be used
-pipe.add_parameter("base_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore base_dataset_name")
-pipe.add_parameter("base_dataset_name", "", "(Optional) Used only if base_dataset_id is empty.")
-pipe.add_parameter("random_state", 42, "Specify random state for consistent training")
-pipe.add_parameter("val", 0.30, "Validation split. Percentage of entire dataset.")
+split_dataset_name = "dataset"
+# split_dataset_name = "update_dataset"
+pipe.add_parameter("base_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If empty, use the lastest of base_dataset_name")
+pipe.add_parameter("split_random_state", 42, "Specify random state for consistent training")
+pipe.add_parameter("split_val_size", 0.20, "Validation split. Percentage of entire dataset.")
+pipe.add_parameter("split_dataset_name", split_dataset_name, "Name of the dataset to uppload the outout to the server. Also used for the next step.")
 
 def pre_processing_callback(pipeline, node, param_override) -> bool:
     print("Cloning dataset_processing id={}".format(node.base_task_id))    
@@ -119,8 +114,9 @@ pipe.add_step(
             if pipe.get_parameters()["base_dataset_url"] # url not provided, no base dataset upload
             else "${pipeline.base_dataset_id}"), 
         "General/base_dataset_name": "${pipeline.base_dataset_name}",
-        "General/random_state": pipe.get_parameters()["random_state"],
-        "General/val_size": pipe.get_parameters()["val"],
+        "General/output_dataset_name": pipe.get_parameters()["split_dataset_name"],
+        "General/random_state": pipe.get_parameters()["split_random_state"],
+        "General/val_size": pipe.get_parameters()["split_val_size"],
         "General/test_size": 0.0
     },
     pre_execute_callback=pre_processing_callback,
@@ -142,10 +138,10 @@ def load_hyp_config(model_variant) -> dict:
     return hyperparameters
 
 # model training settings
-pipe.add_parameter("train_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore train_dataset_name")
-pipe.add_parameter("train_dataset_name", "base_dataset", "(Optional) dataset", "Used only if train_dataset_id is empty.")
-pipe.add_parameter("model_id", "", "(Optional) Pre-trained mode. If not provided, use default based on model_variant")
-pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant to train. Saved as model_name.")
+pipe.add_parameter("model_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore model_dataset_name")
+pipe.add_parameter("model_id", "", "(Optional) Pre-trained model from the server. If not provided, use default based on model_name")
+pipe.add_parameter("model_name", "yolo11n", "(Optional) Latest pre-trained model from the server. If not provided, use default based on model_variant")
+pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant from Ultralytics. Also saved as model_name for future updates.")
 pipe.add_parameter("model_hyps", "", "Dictionary of YOLO.train() input params. Defaults from model variant config file")
 
 def pre_training_callback(pipeline, node, param_override) -> bool:  
@@ -182,9 +178,10 @@ pipe.add_step(
             if pipe.get_parameters()["base_dataset_url"] 
                 or pipe.get_parameters()["base_dataset_id"]
                 or pipe.get_parameters()["base_dataset_name"]
-            else "${pipeline.train_dataset_id}"), # no output from previous step    
-        "General/dataset_name": "${pipeline.train_dataset_name}", 
-        "General/model_id": "${pipeline.model_id}",     
+            else "${pipeline.model_dataset_id}"), # no output from previous steps    
+        "General/dataset_name": "${pipeline.split_dataset_name}", 
+        "General/model_id": "${pipeline.model_id}",   
+        "General/model_name": "${pipeline.model_name}",       
         "General/model_variant": "${pipeline.model_variant}",
         "General/model_hyps": "${pipeline.model_hyps}"
     },
@@ -192,11 +189,65 @@ pipe.add_step(
     post_execute_callback=post_training_callback
 )
 
+
+""" 
+STEP 1.2: Upload eval dataset
+"""
+
+# intial dataset to download. If none provided, task will complete without upload
+eval_dataset_url = ""       # default for no uploading
+# eval_dataset_url = project.get("eval-dataset-url")
+pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
+pipe.add_parameter("eval_dataset_name", "eval_dataset", "Name of the dataset to upload to the server. Also used for the next step.")
+
+def pre_eval_upload_callback(pipeline, node, param_override) -> bool:    
+    print("Cloning upload_eval_dataset id={}".format(node.base_task_id))    
+    return True
+
+def post_eval_upload_callback(pipeline, node) -> None:   
+    print("Completed upload_eval_dataset id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_step(
+    name="upload_eval_dataset",
+    base_task_project=project_name,
+    base_task_name="Upload Evaluation Dataset",
+    parameter_override={
+        "General/dataset_url": "${pipeline.eval_dataset_url}",
+        "General/output_dataset_name": "${pipeline.eval_dataset_name}"},
+    pre_execute_callback=pre_eval_upload_callback,
+    post_execute_callback=post_eval_upload_callback
+)
+
+"""
+STEP 4: Model Evaluation
+"""
+
+def load_eval_config(model_variant) -> dict:
+    eval_config_file = f"{model_variant}_eval_config.yaml"
+    eval_config_path = Path(__file__).parent / eval_config_file
+    print("eval_config_path=", eval_config_path.resolve())
+    if eval_config_path.exists():    
+        with open(eval_config_path, "r") as file:
+            eval_confg = yaml.safe_load(file)
+    
+    return eval_confg
+
 pipe.add_parameter("eval_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore eval_dataset_name")
-pipe.add_parameter("eval_dataset_name", "dataset", "(Optional) Used only if train_dataset_id is empty.")
+pipe.add_parameter("eval_args", "", "Dictionary of YOLO.val() input params. Defaults from model variant config file")
 
 def pre_eval_callback(pipeline, node, param_override) -> bool:    
-    print("Cloning model_evaluation id={}".format(node.base_task_id))    
+    print("Cloning model_evaluation id={}".format(node.base_task_id))      # param validation check
+    model_variant = pipe.get_parameters()["model_variant"]
+    if not model_variant:
+        raise ValueError(f"Missing model_variant param value.")
+    
+    # add default eval config if none provided     
+    if not param_override["General/eval_args"]:
+        eval_args = load_eval_config(model_variant)
+        eval_args_str = yaml.dump(eval_args) 
+        param_override["General/eval_args"] = eval_args_str
+    
     return True
 
 def post_eval_callback(pipeline, node) -> None:   
@@ -212,13 +263,38 @@ pipe.add_step(
         "General/eval_dataset_id":  (
             "${upload_eval_dataset.parameters.General/output_dataset_id}"
             if pipe.get_parameters()["eval_dataset_url"] 
-            else "${pipeline.train_dataset_id}"), # no eval dataset upload
+            else "${pipeline.model_dataset_id}"), # no eval dataset upload
         "General/eval_dataset_name": "${pipeline.eval_dataset_name}",
         "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
-        "General/pub_model_name": "${pipeline.model_variant}"
+        "General/pub_model_name": "${pipeline.model_variant}",
+        "General/eval_args": "${pipeline.eval_args}"
     },
     pre_execute_callback=pre_eval_callback,
     post_execute_callback=post_eval_callback
+)
+
+"""
+STEP 5: Model Publishing
+"""
+
+def pre_pub_callback(pipeline, node, param_override) -> bool:
+    print("Cloning model_publishing id={}".format(node.base_task_id))    
+    return True
+
+def post_pub_callback(pipeline, node) -> None:
+    print("Completed model_publishing id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_step(
+    name="model_publishing",
+    parents=["model_evaluation"],
+    base_task_project=project_name,
+    base_task_name="Model Publishing",
+    parameter_override={
+        "General/draft_model_id": "${model_evaluation.parameters.General/best_model_id}"
+    },
+    pre_execute_callback=pre_pub_callback,
+    post_execute_callback=post_pub_callback
 )
 
 remote_execution = project.get("pipeline-remote-execution")
