@@ -48,7 +48,7 @@ model_id is optional, if not provided, use model_variant to load latest publised
 """
 params = {
     'dataset_id': '',               # specific version of the dataset. if provided, ignore dataset_name
-    'dataset_name': 'dataset',      # latest registered dataset. used if dataset_id is empty
+    'dataset_name': '',             # latest registered dataset. used if dataset_id is empty
     'model_id': '',                 # load specific version of the model 
     'model_name': '',               # latest train model version to continue training from, if model_id is empty
     'model_variant': 'yolo11n',     # base model variant from ultralytics. if model_id and model_names are empty

@@ -27,13 +27,13 @@ task = Task.init(project_name=project_name,
 )
 
 params = {
-    'base_task_id': '7d80cf5abe2b48c1b0528f8a74c48930',               # specific version of the dataset. if provided, ignore dataset_name
-    'hpo_min_batch': 2,             # Default batch size
-    'hpo_max_batch': 6,             # Default batch size
-    'hpo_min_weight_decay': 1e-5,   # Default weight decay
-    'hpo_max_weight_decay': 1e-5,   # Default weight decay
-    'total_max_jobs': 3,                # Reduced from 10 to 3 trials
-    'max_job_iter': 5,               # Reduced from 50 to 20 epochs
+    'base_task_id': '7d80cf5abe2b48c1b0528f8a74c48930', 
+    'hpo_min_batch': 2,             # minimum batch size in HPO range
+    'hpo_max_batch': 6,             # maximum batch size in HPO range
+    'hpo_min_weight_decay': 1e-5,   # minimum weight decay
+    'hpo_max_weight_decay': 1e-5,   # maximum weight decay
+    'total_max_jobs': 3,            # Total maximum job for the optimization process
+    'max_job_iter': 5,              # Number of iteration per job ‘iterations’ for the specified objective
 }
 
 task.connect(params)
