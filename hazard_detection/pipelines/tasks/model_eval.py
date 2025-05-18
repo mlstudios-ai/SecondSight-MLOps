@@ -4,12 +4,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 
 from clearml import Task, Dataset, Model, Logger
 from pathlib import Path
-import os
 import yaml
 import numpy as np
 import tempfile
 from ultralytics import YOLO
-from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
 from enigmaai import util
 
@@ -125,10 +123,9 @@ draft_model_path = draft_model.get_local_copy(raise_on_error=True)
 print(f"Downloaded draft model name: {draft_model.name} id:{draft_model.id} to: {draft_model_path}")
 draft_yolo_model = YOLO(draft_model_path)
 draft_metrics = draft_yolo_model.val(**eval_args)
-draft_recall = draft_metrics.box.map
-draft_model.set_metadata("validation-metrics-recall", draft_recall) # use metadata due to scalar inaccessible using SDK
-draft_model.report_single_value("recall", draft_recall)
-draft_model.report_scalar("Model Evaluation Metrics", "draft", draft_recall, 1)
+draft_recall = draft_metrics.box.mr
+draft_model.set_metadata("validation-metrics-recall", draft_recall) # used for validation
+draft_model.report_scalar("Evaluation Metrics", "draft", draft_recall, )
 
 # upload results reference for report analysis 
 task.upload_artifact(name=f"{pub_model_name}_eval_config", artifact_object=eval_args)
@@ -153,14 +150,14 @@ else:
     print(f"Downloaded published model name: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")
     pub_yolo_model = YOLO(pub_model_path)
     pub_metrics = pub_yolo_model.val(**eval_args)
-    pub_recall = pub_metrics.box.map
-    pub_model.set_metadata("validation-metrics-recall", pub_recall) # use metadata due to scalar inaccessible using SDK
-    # NOTE: can not report metrics on published models
+    pub_recall = pub_metrics.box.mr
+    pub_model.set_metadata("validation-metrics-recall", pub_recall) #  # used for validation 
+    # NOTE: can not report metrics on published models, use metadata due to scalar inaccessible using SDK
     
     # log task scalar metrics
     logger = task.get_logger()
-    logger.report_scalar("Model Evaluation Metrics", "draft", draft_recall, 0)
-    logger.report_scalar("Model Evaluation Metrics", "published", pub_recall, 0)
+    logger.report_scalar("Evaluation Metrics", "recall (draft)", draft_recall, 0)
+    logger.report_scalar("Evaluation Metrics", "recall (published)", pub_recall, 0)
     print("keys=", draft_metrics.keys)
     print("draft_metrics=", draft_metrics.mean_results(), " recall=", draft_recall)
     print("pub_metrics=", pub_metrics.mean_results(), " recall=", pub_recall)

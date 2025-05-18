@@ -10,7 +10,6 @@ import tempfile
 from ultralytics import YOLO
 from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
-from enigmaai import util
 
 """
 Training YOLOV11 model from an existing model or from scratch using based model from 
@@ -49,11 +48,13 @@ model_id is optional, if not provided, use model_variant to load latest publised
 """
 params = {
     'dataset_id': '',               # specific version of the dataset. if provided, ignore dataset_name
-    'dataset_name': '',             # latest registered dataset. used if dataset_id is empty
+    'dataset_name': 'dataset',      # latest registered dataset. used if dataset_id is empty
     'model_id': '',                 # load specific version of the model 
     'model_name': '',               # latest train model version to continue training from, if model_id is empty
-    'model_variant': '',            # base model variant from ultralytics. if model_id and model_names are empty
-    'model_hyps': ''                # string format of dictionary of hyperparameters for YOLO.train()
+    'model_variant': 'yolo11n',     # base model variant from ultralytics. if model_id and model_names are empty
+    'model_hyps': '',               # string format of dictionary of hyperparameters for YOLO.train()
+    'batch': 0,                     # hyperparameter override
+    'weight_decay': 0               # hyperparameter override
 }
 
 task.connect(params)
@@ -67,6 +68,8 @@ model_id = task_params['General/model_id']
 model_name = task_params["General/model_name"]
 model_variant = task_params["General/model_variant"]
 model_hyps_str = task_params["General/model_hyps"]
+model_hyp_batch = int(task_params["General/batch"])
+model_hyp_weight_decay = float(task_params["General/weight_decay"])
         
 # validate task input params
 if (not dataset_id) and (not dataset_name):
@@ -82,6 +85,12 @@ if not model_hyps_str:
     raise ValueError("Missing hyperparameters. Please provide model_hyps for YOLO.train().")
 
 model_hyps = yaml.safe_load(model_hyps_str)
+    
+if model_hyp_batch > 0:
+    model_hyps['batch'] = model_hyp_batch
+    
+if model_hyp_weight_decay > 0:
+    model_hyps['weight_decay'] = model_hyp_weight_decay
 
 """
 Prepare dataset.
@@ -160,12 +169,20 @@ print(f"Training {model_variant} model using {device_name}.")
 model = YOLO(input_model_path)
 results = model.train(**train_args)
 
+# report the rest recall for HPO
+task.get_logger().report_scalar(
+    title='validation',
+    series='recall',
+    value=results.box.mr, # mean recall
+    iteration=0
+)
+
 # upload results reference for report analysis 
 task.upload_artifact(name=f"{model_variant}_hyp_config", artifact_object=model_hyps)
-result_file = working_dir / model_variant / "results.csv"
-task.upload_artifact(name="results", artifact_object=result_file)
-result_model = working_dir / model_variant / "weights" / "best.pt"
-task.upload_artifact(name=f"{model_variant}", artifact_object=result_model) 
+task.upload_artifact(name="results", artifact_object=results)
+# result_file = working_dir / model_variant / "results.csv"
+# result_model = working_dir / model_variant / "weights" / "best.pt"
+# task.upload_artifact(name=f"{model_variant}", artifact_object=result_model) 
 
 """
 Data analysis and visualisation
