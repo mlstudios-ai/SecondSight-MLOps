@@ -191,9 +191,49 @@ pipe.add_step(
 
 
 """ 
+STEP 4: Model hyperparameter optimisation
+"""
+# model optimisation settings
+pipe.add_parameter("hpo_min_batch", 8, "Minimum batch size of HPO range")
+pipe.add_parameter("hpo_max_batch", 16, "Maximum batch size of HPO range")
+pipe.add_parameter("hpo_min_weight_decay", 1e-6, "Maximum batch size of HPO range")
+pipe.add_parameter("hpo_max_weight_decay", 1e-5, "Maximum batch size of HPO range")
+pipe.add_parameter("total_max_jobs", 3, "Total maximum job for the optimization process")
+pipe.add_parameter("max_job_iter", 5 , "Number of iteration per job ‘iterations’ for the specified objective")
+
+def pre_hpo_callback(pipeline, node, param_override) -> bool:  
+    print("Cloning model_hpo id={}".format(node.base_task_id))    
+    
+    print("Cloning Task id={} with parameters: {}".format(
+        node.base_task_id, param_override))
+    
+    return True
+            
+def post_hpo_callback(pipeline, node) -> None:
+    print("Completed model_hpo id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_step(
+    name="model_hpo",
+    parents=["model_training"],
+    base_task_project=project_name,
+    base_task_name="Model HPO",
+    parameter_override={
+        "General/base_task_id": "${model_training.id}",   
+        "General/hpo_min_batch": "${pipeline.hpo_min_batch}",       
+        "General/hpo_max_batch": "${pipeline.hpo_max_batch}",
+        "General/hpo_min_weight_decay": "${pipeline.hpo_min_weight_decay}",
+        "General/hpo_max_weight_decay": "${pipeline.hpo_max_weight_decay}",
+        "General/total_max_jobs": "${pipeline.total_max_jobs}",
+        "General/max_job_iter": "${pipeline.max_job_iter}"
+    },
+    pre_execute_callback=pre_training_callback,
+    post_execute_callback=post_training_callback
+)
+
+""" 
 STEP 1.2: Upload eval dataset
 """
-
 # intial dataset to download. If none provided, task will complete without upload
 # eval_dataset_url = project.get("eval-dataset-url")
 eval_dataset_url = ""       # default for no uploading

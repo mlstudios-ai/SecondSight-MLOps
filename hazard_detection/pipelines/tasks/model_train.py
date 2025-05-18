@@ -58,7 +58,7 @@ params = {
 }
 
 task.connect(params)
-task.execute_remotely(queue_name="training")
+task.execute_remotely(queue_name=project.get('queue-gpu'))
 task_params = task.get_parameters()
 print("model_train params=", task_params)
 

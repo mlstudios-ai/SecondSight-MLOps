@@ -28,22 +28,25 @@ task = Task.init(project_name=project_name,
 
 params = {
     'base_task_id': '7d80cf5abe2b48c1b0528f8a74c48930',               # specific version of the dataset. if provided, ignore dataset_name
-    'dataset_id': '60a73f3a14454e5698e7c9fb7fde83e6',
     'hpo_min_batch': 2,             # Default batch size
     'hpo_max_batch': 6,             # Default batch size
     'hpo_min_weight_decay': 1e-5,   # Default weight decay
     'hpo_max_weight_decay': 1e-5,   # Default weight decay
-    'num_trials': 3,                # Reduced from 10 to 3 trials
-    'max_epochs': 5,                # Reduced from 50 to 20 epochs
-    'hpo_queue': 'training',        # Queue for test tasks
+    'total_max_jobs': 3,                # Reduced from 10 to 3 trials
+    'max_job_iter': 5,               # Reduced from 50 to 20 epochs
 }
 
 task.connect(params)
 task_params = task.get_parameters()
-# task.execute_remotely(queue_name=task_params["General/hpo_queue"])
+task.execute_remotely(queue_name=project.get('queue-gpu'))
 logger.info(f"model_HPO params={task_params}")
 
 base_task_id = task_params['General/base_task_id']
+
+# Exit if not base task
+if not base_task_id:
+    task.mark_completed(status_message="No base task ID provided. Nothing to optimisation from.")
+    exit(0)
 
 # Create the HPO task
 hpo_task = HyperParameterOptimizer(
@@ -60,9 +63,9 @@ hpo_task = HyperParameterOptimizer(
     objective_metric_series='recall',
     objective_metric_sign='max',
     max_number_of_concurrent_tasks=10,
-    total_max_jobs=int(task_params['General/num_trials']),
+    total_max_jobs=int(task_params['General/total_max_jobs']),
     min_iteration_per_job=1,
-    max_iteration_per_job=int(task_params['General/max_epochs']),
+    max_iteration_per_job=int(task_params['General/max_job_iter']),
     pool_period_min=10, 
     execution_queue=task_params['General/hpo_queue'],
     save_top_k_tasks_only=1

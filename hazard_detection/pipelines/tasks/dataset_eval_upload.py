@@ -36,7 +36,7 @@ params = {
 }
 
 task.connect(params)
-task.execute_remotely(queue_name="default") 
+task.execute_remotely(queue_name=project.get('queue-default')) 
 task_params = task.get_parameters()
 print("dataset_eval_upload params=", task_params)
 

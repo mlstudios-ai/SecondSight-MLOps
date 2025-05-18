@@ -10,6 +10,15 @@ project-name: "Detection_Dev"     # (run from dev branch) For development
 # project-name: "Detection_Stage"   # (run from main branch) For staging / pre-production testing
 # project-name: "Detection"         # (run from main branch) For production
 
+# default queue for CPU tasks
+queue-default: "default"
+
+# default queue for GPU tasks
+queue-gpu: "gpu"
+
+# default queue for service tasks
+queue-service: "services"
+
 # cache limit for number of files for local downloads. The oldest will be removed if limit is exceeded
 storage-cache-limit: 3
 
