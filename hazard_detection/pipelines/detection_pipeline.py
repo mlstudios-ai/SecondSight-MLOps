@@ -227,8 +227,8 @@ pipe.add_step(
         "General/total_max_jobs": "${pipeline.total_max_jobs}",
         "General/max_job_iter": "${pipeline.max_job_iter}"
     },
-    pre_execute_callback=pre_training_callback,
-    post_execute_callback=post_training_callback
+    pre_execute_callback=pre_hpo_callback,
+    post_execute_callback=post_hpo_callback
 )
 
 """ 
@@ -296,7 +296,7 @@ def post_eval_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="model_evaluation",
-    parents=["model_training", "upload_eval_dataset"],
+    parents=["model_hpo", "upload_eval_dataset"],
     base_task_project=project_name,
     base_task_name="Model Evaluation",
     parameter_override={
@@ -305,7 +305,7 @@ pipe.add_step(
             if pipe.get_parameters()["eval_dataset_url"] 
             else "${pipeline.model_dataset_id}"), # no eval dataset upload
         "General/eval_dataset_name": "${pipeline.eval_dataset_name}",
-        "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
+        "General/draft_model_id": "${model_hpo.parameters.General/best_model_id}",
         "General/pub_model_name": "${pipeline.model_variant}",
         "General/eval_args": "${pipeline.eval_args}"
     },
@@ -341,7 +341,7 @@ remote_execution = project.get("pipeline-remote-execution")
 
 if remote_execution:
     print(f"Executing '{pipeline_name}' pipeline remotely")
-    pipe.start()
+    pipe.start(queue=project.get('queue-service'))
 else:
     print(f"Executing '{pipeline_name}' pipeline locally")
     pipe.start_locally(run_pipeline_steps_locally=True)
