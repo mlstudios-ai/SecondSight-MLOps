@@ -27,7 +27,7 @@ task = Task.init(project_name=project_name,
 )
 
 params = {
-    'base_task_id': '7d80cf5abe2b48c1b0528f8a74c48930', 
+    'base_task_id': '', 
     'hpo_min_batch': 2,             # minimum batch size in HPO range
     'hpo_max_batch': 6,             # maximum batch size in HPO range
     'hpo_min_weight_decay': 1e-5,   # minimum weight decay
