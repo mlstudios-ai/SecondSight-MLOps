@@ -14,7 +14,7 @@ project-name: "Detection_Dev"     # (run from dev branch) For development
 queue-default: "default"
 
 # default queue for GPU tasks
-queue-gpu: "gpu"
+queue-gpu: "training"
 
 # default queue for service tasks
 queue-service: "services"
