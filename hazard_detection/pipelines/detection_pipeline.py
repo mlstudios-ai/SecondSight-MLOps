@@ -54,11 +54,11 @@ STEP 1.1: Load base dataset
 
 # intial dataset to download. If none provided, task will complete without upload
 base_dataset_url = ""       # default for no uploading
-base_dataset_name = ""      # default for no uploading (and splitting in the next task if base_dataset_id is empty)
+base_dataset_name = ""      # default for no preprocessing if base_dataset_url is also empty
 # base_dataset_url = project.get("base-dataset-url")
 # base_dataset_name = "base_dataset"
-base_dataset_url = "/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/mini"
-base_dataset_name = "base_update_dataset"
+# base_dataset_url = "/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/mini"
+# base_dataset_name = "base_update_dataset"
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
 pipe.add_parameter("base_dataset_name", base_dataset_name, "Name of the dataset to upload to the server. Also used for the next step.")
 
@@ -88,8 +88,8 @@ STEP 2: Dataset processing
 
 # processing starting dataset for pipeline
 # it will get dataset_id from step 1, if not provided, this will be used
-split_dataset_name = "dataset"
-split_dataset_name = "update_dataset"
+split_dataset_name = "dataset"  # default to use the latest preprocessed dataset
+# split_dataset_name = "update_dataset"
 pipe.add_parameter("base_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If empty, use the lastest of base_dataset_name")
 pipe.add_parameter("split_random_state", 42, "Specify random state for consistent training")
 pipe.add_parameter("split_val_size", 0.20, "Validation split. Percentage of entire dataset.")
@@ -194,9 +194,9 @@ pipe.add_step(
 STEP 4: Model hyperparameter optimisation
 """
 # model optimisation settings
-pipe.add_parameter("hpo_min_batch", 8, "Minimum batch size of HPO range")
-pipe.add_parameter("hpo_max_batch", 16, "Maximum batch size of HPO range")
-pipe.add_parameter("hpo_min_weight_decay", 1e-6, "Maximum batch size of HPO range")
+pipe.add_parameter("hpo_min_batch", 6, "Minimum batch size of HPO range")
+pipe.add_parameter("hpo_max_batch", 8, "Maximum batch size of HPO range")
+pipe.add_parameter("hpo_min_weight_decay", 1e-5, "Maximum batch size of HPO range")
 pipe.add_parameter("hpo_max_weight_decay", 1e-5, "Maximum batch size of HPO range")
 pipe.add_parameter("total_max_jobs", 3, "Total maximum job for the optimization process")
 pipe.add_parameter("max_job_iter", 5 , "Number of iteration per job ‘iterations’ for the specified objective")
@@ -260,7 +260,7 @@ pipe.add_step(
 )
 
 """
-STEP 4: Model Evaluation
+STEP 5: Model Evaluation
 """
 
 def load_eval_config(model_variant) -> dict:
@@ -314,7 +314,7 @@ pipe.add_step(
 )
 
 """
-STEP 5: Model Publishing
+STEP 6: Model Publishing
 """
 
 def pre_pub_callback(pipeline, node, param_override) -> bool:
