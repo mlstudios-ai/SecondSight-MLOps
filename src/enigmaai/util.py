@@ -2,6 +2,9 @@ import os
 from typing import List
 import torch
 from pathlib import Path
+from dotenv import load_dotenv
+import base64
+from github import Github, InputGitTreeElement, GithubException
 
 def get_device_name() -> str:
     """
@@ -42,3 +45,35 @@ def class_dist(labels_dir: List[str], classes: List[str]) -> List[int]:
     
     return class_counts
     
+def deploy_model(file_path: str, repo_name: str, repo_ref: str, repo_path: str):
+    # Load .env file
+    load_dotenv()
+    
+    try:
+        # Authenticate with a personal access token
+        g = Github(os.getenv("ENDPOINT_GITHUB_ACCESS_TOKEN"))
+        repo = g.get_user().get_repo(repo_name)
+
+        with open(file_path, "rb") as f:
+            content = f.read()
+            encoded_content = base64.b64encode(content).decode()
+
+        # Get the latest commit
+        master_ref = repo.get_git_ref(repo_ref)
+        master_sha = master_ref.object.sha
+        base_tree = repo.get_git_tree(master_sha)
+
+        # Create a git tree element
+        element = InputGitTreeElement(repo_path, '100644', 'blob', encoded_content)
+        tree = repo.create_git_tree([element], base_tree)
+        parent = repo.get_git_commit(master_sha)
+        commit = repo.create_git_commit("Add model file", tree, [parent])
+        master_ref.edit(commit.sha)
+        
+    except GithubException as e:
+        print(f"GitHub error: {e.data['message']}")
+        return False
+    
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return False
