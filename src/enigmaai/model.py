@@ -10,6 +10,17 @@ class DeploymentError(Exception):
         super().__init__(message)
     
 def deploy_model(file_path: str, repo_name: str, repo_branch: str, repo_path: str):
+    """Check a file from local to github repo. Please set github access key in .env file.
+
+    Args:
+        file_path (str): Local file path
+        repo_name (str): GitHub repository name
+        repo_branch (str): GitHub branch. e.g main
+        repo_path (str): path from the root folder in the repo
+
+    Raises:
+        DeploymentError: Errors that prevent deploying model into GitHub.
+    """
     load_dotenv()
     
     try:
