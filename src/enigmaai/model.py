@@ -5,38 +5,40 @@ from github import Github, InputGitTreeElement, GithubException
 
 class DeploymentError(Exception):
     """ Error deploying model to endpoint url for inferencing. """
-    pass
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
     
 def deploy_model(file_path: str, repo_name: str, repo_branch: str, repo_path: str):
     load_dotenv()
     
     try:
         # Authenticate with a personal access token
-        g = Github(os.getenv("ENDPOINT_GITHUB_ACCESS_TOKEN"))
-        
-        print("user:", g)
+        g = Github(os.getenv("ENDPOINT_GITHUB_ACCESS_TOKEN"))        
         repo = g.get_user().get_repo(repo_name)
-
-        print("repo:", repo)
+        print("user:", g, "repo:", repo)
         
         with open(file_path, "rb") as f:
             content = f.read()
-            encoded_content = base64.b64encode(content).decode()
-
-        blob = repo.create_git_blob(encoded_content, encoding="base64")
-        
-        # Get the latest commit
-        main_ref = repo.get_git_ref(repo_branch)
-        main_sha = main_ref.object.sha
-        base_tree = repo.get_git_tree(main_sha)
-
-        # Create a git tree element
-        element = InputGitTreeElement(repo_path, '100644', 'blob', sha=blob.sha)
-        tree = repo.create_git_tree([element], base_tree)
-        parent = repo.get_git_commit(main_sha)
-        commit = repo.create_git_commit("Add model file", tree, [parent])
-        main_ref.edit(commit.sha)
-        
+            
+        try: # File exists, update it
+            file = repo.get_contents(repo_path, ref=repo_branch)            
+            repo.update_file(
+                path=repo_path,
+                message="Update model file",
+                content=content,
+                sha=file.sha,
+                branch=repo_branch
+            )
+            print(f"Updated {repo_path}")
+        except Exception: # File does not exist, create it            
+            repo.create_file(
+                path=repo_path,
+                message="Add model file",
+                content=content,
+                branch=repo_branch
+            )
+            print(f"Updated {repo_path}")
     except GithubException as e:
         raise DeploymentError(f"GitHub error: {e.data['message']}")
     
