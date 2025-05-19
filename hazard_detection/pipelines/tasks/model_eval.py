@@ -125,7 +125,7 @@ draft_yolo_model = YOLO(draft_model_path)
 draft_metrics = draft_yolo_model.val(**eval_args)
 draft_recall = draft_metrics.box.mr
 draft_model.set_metadata("validation-metrics-recall", draft_recall) # used for validation
-draft_model.report_scalar("Evaluation Metrics", "draft", draft_recall, )
+draft_model.report_scalar("Evaluation Metrics", "draft", draft_recall, 0)
 
 # upload results reference for report analysis 
 task.upload_artifact(name=f"{pub_model_name}_eval_config", artifact_object=eval_args)
