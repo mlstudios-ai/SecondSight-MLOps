@@ -56,7 +56,7 @@ repo_path = project.get('endpoint-repo-path')
 try:
     model.deploy_model(pub_model_path, repo_name, repo_branch, repo_path)
     task.set_parameter("deployed_model_id", pub_model.id)
-    print(f"Deployed model from: {pub_model_path} to {pub_model_path}/{repo_path} ref {repo_branch}")    
+    print(f"Deployed model from: {pub_model_path} to {repo_path}/{repo_path} branch {repo_branch}")    
 except DeploymentError as e:    
     print(f"Deployment Error: {e.message}: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")  
 except Exception as e:    
