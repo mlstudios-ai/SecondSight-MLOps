@@ -16,7 +16,7 @@ def deploy_model(file_path: str, repo_name: str, repo_branch: str, repo_path: st
         # Authenticate with a personal access token
         g = Github(os.getenv("ENDPOINT_GITHUB_ACCESS_TOKEN"))        
         repo = g.get_user().get_repo(repo_name)
-        print("user:", g, "repo:", repo)
+        print("user:", g.get_user(), "repo:", repo)
         
         with open(file_path, "rb") as f:
             content = f.read()
