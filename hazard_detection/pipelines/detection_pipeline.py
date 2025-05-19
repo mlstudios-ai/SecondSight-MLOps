@@ -337,6 +337,32 @@ pipe.add_step(
     post_execute_callback=post_pub_callback
 )
 
+
+"""
+STEP 7: Model Deployment
+"""
+def pre_deploy_callback(pipeline, node, param_override) -> bool:
+    print("Cloning model_deploy id={}".format(node.base_task_id))    
+    return True
+
+def post_deploy_callback(pipeline, node) -> None:
+    print("Completed model_deploy id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_parameter("pub_model_name", "yolo11n", "Deploy the lastest published model to endpoint")
+
+pipe.add_step(
+    name="model_deployment",
+    parents=["model_publishing"],
+    base_task_project=project_name,
+    base_task_name="Model Deployment",
+    parameter_override={
+        "General/pub_model_name": "${pipeline.pub_model_name}"
+    },
+    pre_execute_callback=pre_deploy_callback,
+    post_execute_callback=post_deploy_callback
+)
+
 remote_execution = project.get("pipeline-remote-execution")
 
 if remote_execution:

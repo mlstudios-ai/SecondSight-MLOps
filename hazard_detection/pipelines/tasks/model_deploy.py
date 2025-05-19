@@ -3,7 +3,8 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 from clearml import Task, Model
 from enigmaai.config import Project, ConfigFactory
-from enigmaai import util
+from enigmaai import model
+from enigmaai.model import DeploymentError
 
 """
 Deoploy model to FastAPI repo for inferencing.
@@ -49,15 +50,16 @@ print(f"Downloaded model name: {pub_model.name} id:{pub_model.id} to: {pub_model
 
 # setup github info for deployment and inferencing
 repo_name = project.get('endpoint-repo-name')
-repo_ref = project.get('endpoint-repo-ref')
+repo_branch = project.get('endpoint-repo-branch')
 repo_path = project.get('endpoint-repo-path')
 
-deployed = util.deploy_model(pub_model_path, repo_name, repo_ref, repo_path)
-
-if deployed:    
+try:
+    model.deploy_model(pub_model_path, repo_name, repo_branch, repo_path)
     task.set_parameter("deployed_model_id", pub_model.id)
-    print(f"Deployed model name: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")    
-else:   
-    print(f"Error: faile to deploy model name: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")    
+    print(f"Deployed model from: {pub_model_path} to {pub_model_path}/{repo_path} ref {repo_branch}")    
+except DeploymentError as e:    
+    print(f"Deployment Error: {e.message}: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")  
+except Exception as e:    
+    print(f"Unkown Error: {e.message}: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")  
     
 

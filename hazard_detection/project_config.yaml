@@ -41,5 +41,5 @@ eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Da
 validation-metrics-recall: 0.7
 
 endpoint-repo-name: "SecondSight-API"
-endpoint-repo-ref: "heads/main"
+endpoint-repo-branch: "heads/main"
 endpoint-repo-path: "models/hazard_best.pt"
