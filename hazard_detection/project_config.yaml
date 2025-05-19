@@ -40,6 +40,7 @@ eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Da
 # minimum performance requirements for model publishing
 validation-metrics-recall: 0.7
 
+# Keys for model deployment to FastAPI repo for serving endpoint
 endpoint-repo-name: "SecondSight-API"
 endpoint-repo-branch: "main"
 endpoint-repo-path: "models/hazard_best.pt"
