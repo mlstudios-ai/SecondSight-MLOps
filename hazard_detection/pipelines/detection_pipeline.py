@@ -196,7 +196,7 @@ STEP 4: Model hyperparameter optimisation
 # model optimisation settings
 pipe.add_parameter("hpo_min_batch", 6, "Minimum batch size of HPO range")
 pipe.add_parameter("hpo_max_batch", 8, "Maximum batch size of HPO range")
-pipe.add_parameter("hpo_min_weight_decay", 1e-5, "Maximum batch size of HPO range")
+pipe.add_parameter("hpo_min_weight_decay", 1e-5, "Minimum batch size of HPO range")
 pipe.add_parameter("hpo_max_weight_decay", 1e-6, "Maximum batch size of HPO range")
 pipe.add_parameter("total_max_jobs", 3, "Total maximum job for the optimization process")
 pipe.add_parameter("max_job_iter", 5 , "Number of iteration per job ‘iterations’ for the specified objective")
