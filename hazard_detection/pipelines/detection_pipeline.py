@@ -139,7 +139,7 @@ def load_hyp_config(model_variant) -> dict:
 
 # model training settings
 pipe.add_parameter("model_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If set, ignore model_dataset_name")
-pipe.add_parameter("model_id", "a63c5ed32e3349778137274d6d7ba4ac", "(Optional) Pre-trained model from the server. If not provided, use default based on model_name")
+pipe.add_parameter("model_id", "", "(Optional) Pre-trained model from the server. If not provided, use default based on model_name")
 pipe.add_parameter("model_name", "yolo11n", "(Optional) Latest pre-trained model from the server. If not provided, use default based on model_variant")
 pipe.add_parameter("model_variant", "yolo11n", "YOLOv11 model variant from Ultralytics. Also saved as model_name for future updates.")
 pipe.add_parameter("model_hyps", "", "Dictionary of YOLO.train() input params. Defaults from model variant config file")
