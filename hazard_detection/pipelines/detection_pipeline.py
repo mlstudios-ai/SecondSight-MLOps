@@ -200,6 +200,7 @@ pipe.add_parameter("hpo_min_weight_decay", 1e-5, "Minimum batch size of HPO rang
 pipe.add_parameter("hpo_max_weight_decay", 1e-6, "Maximum batch size of HPO range")
 pipe.add_parameter("total_max_jobs", 3, "Total maximum job for the optimization process")
 pipe.add_parameter("max_job_iter", 5 , "Number of iteration per job ‘iterations’ for the specified objective")
+pipe.add_parameter("concurrent_tasks", 5 , "Nuber of concurrent experiments running")
 
 def pre_hpo_callback(pipeline, node, param_override) -> bool:  
     print("Cloning model_hpo id={}".format(node.base_task_id))    
@@ -225,7 +226,8 @@ pipe.add_step(
         "General/hpo_min_weight_decay": "${pipeline.hpo_min_weight_decay}",
         "General/hpo_max_weight_decay": "${pipeline.hpo_max_weight_decay}",
         "General/total_max_jobs": "${pipeline.total_max_jobs}",
-        "General/max_job_iter": "${pipeline.max_job_iter}"
+        "General/max_job_iter": "${pipeline.max_job_iter}",
+        "General/concurrent_tasks": "${pipeline.concurrent_tasks}"
     },
     pre_execute_callback=pre_hpo_callback,
     post_execute_callback=post_hpo_callback

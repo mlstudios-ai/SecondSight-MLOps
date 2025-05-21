@@ -34,6 +34,7 @@ params = {
     'hpo_max_weight_decay': 1e-5,   # maximum weight decay
     'total_max_jobs': 3,            # Total maximum job for the optimization process
     'max_job_iter': 5,              # Number of iteration per job ‘iterations’ for the specified objective
+    'concurrent_tasks': 2,          # Nuber of concurrent experiments running
 }
 
 task.connect(params)
@@ -62,7 +63,7 @@ hpo_task = HyperParameterOptimizer(
     objective_metric_title='validation',
     objective_metric_series='recall',
     objective_metric_sign='max',
-    max_number_of_concurrent_tasks=10,
+    max_number_of_concurrent_tasks=int(task_params['General/concurrent_tasks']),
     total_max_jobs=int(task_params['General/total_max_jobs']),
     min_iteration_per_job=1,
     max_iteration_per_job=int(task_params['General/max_job_iter']),
