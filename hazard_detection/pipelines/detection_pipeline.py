@@ -1,5 +1,13 @@
 import sys
 import os
+sys.path.remove("/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/SecondSight-API/api/src")
+sys.path.remove("/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/EnigmaAI/hazard_detection/pipelines")
+# print("-----")
+# print(sys.path)
+# print("-----")
+
+print(sys.path)
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
 from pathlib import Path
@@ -53,10 +61,10 @@ STEP 1.1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-base_dataset_url = ""       # default for no uploading
-base_dataset_name = ""      # default for no preprocessing if base_dataset_url is also empty
-# base_dataset_url = project.get("base-dataset-url")
-# base_dataset_name = "base_dataset"
+# base_dataset_url = ""       # default for no uploading
+# base_dataset_name = ""      # default for no preprocessing if base_dataset_url is also empty
+base_dataset_url = project.get("base-dataset-url")
+base_dataset_name = "base_dataset"
 # base_dataset_url = "/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/mini"
 # base_dataset_name = "base_update_dataset"
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
@@ -197,7 +205,7 @@ STEP 4: Model hyperparameter optimisation
 pipe.add_parameter("hpo_min_batch", 6, "Minimum batch size of HPO range")
 pipe.add_parameter("hpo_max_batch", 8, "Maximum batch size of HPO range")
 pipe.add_parameter("hpo_min_weight_decay", 1e-5, "Minimum batch size of HPO range")
-pipe.add_parameter("hpo_max_weight_decay", 1e-6, "Maximum batch size of HPO range")
+pipe.add_parameter("hpo_max_weight_decay", 1e-5, "Maximum batch size of HPO range")
 pipe.add_parameter("total_max_jobs", 3, "Total maximum job for the optimization process")
 pipe.add_parameter("max_job_iter", 5 , "Number of iteration per job ‘iterations’ for the specified objective")
 pipe.add_parameter("concurrent_tasks", 5 , "Nuber of concurrent experiments running")
@@ -237,8 +245,8 @@ pipe.add_step(
 STEP 1.2: Upload eval dataset
 """
 # intial dataset to download. If none provided, task will complete without upload
-# eval_dataset_url = project.get("eval-dataset-url")
-eval_dataset_url = ""       # default for no uploading
+eval_dataset_url = project.get("eval-dataset-url")
+# eval_dataset_url = ""       # default for no uploading
 pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
 pipe.add_parameter("eval_dataset_name", "eval_dataset", "Name of the dataset to upload to the server. Also used for the next step.")
 
@@ -369,7 +377,7 @@ remote_execution = project.get("pipeline-remote-execution")
 
 if remote_execution:
     print(f"Executing '{pipeline_name}' pipeline remotely")
-    pipe.start(queue=project.get('queue-service'))
+    pipe.start(queue=project.get('queue-gpu'))
 else:
     print(f"Executing '{pipeline_name}' pipeline locally")
     pipe.start_locally(run_pipeline_steps_locally=True)
