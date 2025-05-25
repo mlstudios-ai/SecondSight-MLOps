@@ -10,12 +10,12 @@ For on-device inferencing, our model uses the pipeline YOLO11 Nano output model 
 
 Please refer to https://github.com/vanilla-ai-ml/SecondSight for your build. NOTE: permission required to access repo.
 
-For remote API inferencing, we host it on FastAPI framework and use for scene description. The model is a custom fine tuned model for vision impairment. 
-
+For remote API inferencing, we host it on FastAPI framework and use for scene description. The model is a custom fine tuned model for vision impairment. You can now build the API from https://github.com/vanilla-ai-ml/SecondSight-API and use for inferencing the scene description model.
 
 #### Hazard Detection Pipeline
+There are minimal updates from Hazard Detection Pipeline apart from the HPO and Mode Deployment tasks. For this version, we focus on system integration and the completion of scene description model pipeline below. 
 
-#### Scene description Pipeline
+#### Scene Description Pipeline
 The Scene Description Pipeline is for training Vision encoder-Language decoder model architecture using google/vit-base-patch16-224-in21k for vision and distilgpt2 for language components. The pipeline begins with mapping the images with annotations for both train and test sets, to publishing the model after training and fine-tuning hyperparameters. Similar to the Hazard Detection Pipeline, it is designed to be flexible.
 
 VLMPipeline: end-to-end vision‐language MLOps orchestration using ClearML
@@ -33,23 +33,22 @@ All steps log their task IDs and parameters to the console, so you can trace exa
 and run. Simply override the pipeline parameters at launch time to adjust behavior, queues, or hyperparameter ranges.
 
 ### New Features 
-- Model selection of Yolov11 for best performance in mobile devices
-- ClearML tasks for running various experiements independently.
-- Pipeline automation for various CI operations and model training
-- Each step contains data visualisation and performance visualisation for indepth analysis
-- Configurable project. New changes can be made without changing the code.
+- Optimised YOLO11 Nano model for hazard detection
+- UI application and model integration
+- Completion of VML pipeline. Now the machine learning is fully automated.
 
 ### Improvements
-- Optimised YOLO and VLM model
-- Custom dataset curated specific for visual impairment
-- Training now can be automated
-- Added visualisation for better analysis
+- Hyperparameter optimised models
+- Auto deployment
+- Refined UI design
 
 ### Bug Fixes
-None
+- Cache error on File Not Found
 
 ### Known Issues
-Scene Description pipeline not yet configurable. This feature is coming soon.
+No load testing on scene description model on FastAPI
+Limited UI testing for protoyping
+Voice Synthesizer has some multi threading issues where repeat speech quickly can cause malfunction of the synthesizer.
 
 ##3 Installation
 Please refer to `/README.md`.
