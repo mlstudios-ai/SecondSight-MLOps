@@ -36,13 +36,5 @@ jobs:
 
       - name: Run pipeline
         run: |
-          python hazard_detection/pipelines/tasks/dataset_base_upload.py 
-          python hazard_detection/pipelines/tasks/dataset_base_split.py
-          hazard_detection/pipelines/tasks/dataset_eval_upload.py
-          hazard_detection/pipelines/tasks/model_train.py
-          python hazard_detection/pipelines/tasks/model_hpo.py
-          python hazard_detection/pipelines/tasks/model_eval.py
-          python hazard_detection/pipelines/tasks/model_publish.py
           python hazard_detection/pipelines/detection_pipeline.py
-
-          
+          python image_description/pipelines/desc_pipeline.py
