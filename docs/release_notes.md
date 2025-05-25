@@ -15,6 +15,22 @@ For remote API inferencing, we host it on FastAPI framework and use for scene de
 
 #### Hazard Detection Pipeline
 
+#### Scene description Pipeline
+The Scene Description Pipeline is for training Vision encoder-Language decoder model architecture using google/vit-base-patch16-224-in21k for vision and distilgpt2 for language components. The pipeline begins with mapping the images with annotations for both train and test sets, to publishing the model after training and fine-tuning hyperparameters. Similar to the Hazard Detection Pipeline, it is designed to be flexible.
+
+VLMPipeline: end-to-end vision‐language MLOps orchestration using ClearML
+This pipeline orchestrates the full life cycle of a vision‐language (VLM) image‐captioning model include hyperparameter optimization, providing flexible
+entry points so you can run only the steps you need
+
+Flexible Execution Modes (Just as YOLOv11 Pipeline)
+Depending on which pipeline parameters supplied, it can skip any of the first three steps and pick up later:
+- **Full run**: steps 1→9 
+- **Skip raw download**: start at step 2  
+- **Skip prep + labeling**: start at step 3  
+- **Skip prep + training**: start at step 4 (directly evaluate an existing model)
+> **Note:** Model evaluation (step 8) cannot be skipped it would auto‐publish whatever draft model provided.
+All steps log their task IDs and parameters to the console, so you can trace exactly how each subtask was cloned
+and run. Simply override the pipeline parameters at launch time to adjust behavior, queues, or hyperparameter ranges.
 
 ### New Features 
 - Model selection of Yolov11 for best performance in mobile devices
