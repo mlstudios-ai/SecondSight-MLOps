@@ -1,9 +1,52 @@
 # Release Notes:
 Product: SecondSight - Live hazard detection for visual impairment <br>
-Version 2.0<br>
+## Version 0.2
 Release Date: 4 May, 2025<br>
 
-## Overview
+### Overview
+We have completed end-to-end pipeline from data upload to model deployment as part of the MLOps CI/CD. Building from the previous version where you can configure the pipeline and tasks to suit your needs, this version now added hyperparameter optimisation and model deployment for on-deviced and remote API endpoint inferencing.
+
+For on-device inferencing, our model uses the pipeline YOLO11 Nano output model deployed to FastAPI then converted to CoreML for iOS compatibility. You can now download the iOS protoype for use in live detection. This is a standalone mode - no internet connection required.
+
+Please refer to https://github.com/vanilla-ai-ml/SecondSight for your build. NOTE: permission required to access repo.
+
+For remote API inferencing, we host it on FastAPI framework and use for scene description. The model is a custom fine tuned model for vision impairment. 
+
+
+#### Hazard Detection Pipeline
+
+
+### New Features 
+- Model selection of Yolov11 for best performance in mobile devices
+- ClearML tasks for running various experiements independently.
+- Pipeline automation for various CI operations and model training
+- Each step contains data visualisation and performance visualisation for indepth analysis
+- Configurable project. New changes can be made without changing the code.
+
+### Improvements
+- Optimised YOLO and VLM model
+- Custom dataset curated specific for visual impairment
+- Training now can be automated
+- Added visualisation for better analysis
+
+### Bug Fixes
+None
+
+### Known Issues
+Scene Description pipeline not yet configurable. This feature is coming soon.
+
+##3 Installation
+Please refer to `/README.md`.
+
+### Coming Soon
+- Model registration and serving
+- Model deployment and inferencing
+- Application UI for hazard detection.
+
+## Version 0.1<br>
+Release Date: 4 May, 2025<br>
+
+### Overview
 We are pround to release our machine learning pipelines on ClearML for automation. The automation project can be configurated to run in different environments in isolation, removing chance of conflict. This is done by simply give it a project name in the project config. This feature enables production workflow environment such as dev, staging, UAT, and production environments.
 
 The pipelines are geared towards many of machine learning processes through configurable experiements and orchestration. Each ClearML tasks are highly configurable and can be executed indpendently for various experiments. These tasks can be orchestrated in a pipeline for a sequence of machine learning operations, levaraging the way the tasks are designed.
@@ -39,29 +82,29 @@ Our Scene Description pipeline works in similar fashion. It uses the same design
 
 It takes on a common dataset from Hazard Detection for fune tuning and inline with the same vision and objectives. The annotation and dataset are automatically generated without needing of manual work. This pipleline can handle end to end similar to the YOLOv11 pipeline, that is from dataset upload to model publishing.
 
-## New Features 
+### New Features 
 - Model selection of Yolov11 for best performance in mobile devices
 - ClearML tasks for running various experiements independently.
 - Pipeline automation for various CI operations and model training
 - Each step contains data visualisation and performance visualisation for indepth analysis
 - Configurable project. New changes can be made without changing the code.
 
-## Improvements
+### Improvements
 - Optimised YOLO and VLM model
 - Custom dataset curated specific for visual impairment
 - Training now can be automated
 - Added visualisation for better analysis
 
-## Bug Fixes
+### Bug Fixes
 None
 
-## Known Issues
+### Known Issues
 Scene Description pipeline not yet configurable. This feature is coming soon.
 
-## Installation
+### Installation
 Please refer to `/README.md`.
 
-## Coming Soon
+### Coming Soon
 - Model registration and serving
 - Model deployment and inferencing
 - Application UI for hazard detection.
