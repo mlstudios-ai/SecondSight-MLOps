@@ -6,11 +6,13 @@ Release Date: 4 May, 2025<br>
 ### Overview
 We have completed end-to-end pipeline from data upload to model deployment as part of the MLOps CI/CD. Building from the previous version where you can configure the pipeline and tasks to suit your needs, this version now added hyperparameter optimisation and model deployment for on-deviced and remote API endpoint inferencing.
 
+We also added Pull Request release to automatically trigger retraining of the model.
+
 For on-device inferencing, our model uses the pipeline YOLO11 Nano output model deployed to FastAPI then converted to CoreML for iOS compatibility. You can now download the iOS protoype for use in live detection. This is a standalone mode - no internet connection required.
 
 Please refer to https://github.com/vanilla-ai-ml/SecondSight for your build. NOTE: permission required to access repo.
 
-For remote API inferencing, we host it on FastAPI framework and use for scene description. The model is a custom fine tuned model for vision impairment. You can now build the API from https://github.com/vanilla-ai-ml/SecondSight-API and use for inferencing the scene description model.
+For remote API inferencing, we host it on FastAPI framework and use for scene description. The model is a custom fine tuned model for vision impairment. You can now build the API from https://github.com/vanilla-ai-ml/SecondSight-API and use for inferencing the scene description model.r
 
 #### Hazard Detection Pipeline
 There are minimal updates from Hazard Detection Pipeline apart from the HPO and Mode Deployment tasks. For this version, we focus on system integration and the completion of scene description model pipeline below. 
