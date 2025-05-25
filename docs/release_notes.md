@@ -10,6 +10,8 @@ We also added Pull Request release to automatically trigger retraining of the mo
 
 For on-device inferencing, our model uses the pipeline YOLO11 Nano output model deployed to FastAPI then converted to CoreML for iOS compatibility. You can now download the iOS protoype for use in live detection. This is a standalone mode - no internet connection required.
 
+With internet, you an now access the scene description function of the application where you can get more information on the hazards or the environment in general.
+
 Please refer to https://github.com/vanilla-ai-ml/SecondSight for your build. NOTE: permission required to access repo.
 
 For remote API inferencing, we host it on FastAPI framework and use for scene description. The model is a custom fine tuned model for vision impairment. You can now build the API from https://github.com/vanilla-ai-ml/SecondSight-API and use for inferencing the scene description model.r
