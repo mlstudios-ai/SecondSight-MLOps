@@ -1,12 +1,5 @@
 import sys
 import os
-sys.path.remove("/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/SecondSight-API/api/src")
-sys.path.remove("/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/EnigmaAI/hazard_detection/pipelines")
-# print("-----")
-# print(sys.path)
-# print("-----")
-
-print(sys.path)
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
@@ -204,11 +197,11 @@ STEP 4: Model hyperparameter optimisation
 # model optimisation settings
 pipe.add_parameter("hpo_min_batch", 6, "Minimum batch size of HPO range")
 pipe.add_parameter("hpo_max_batch", 8, "Maximum batch size of HPO range")
-pipe.add_parameter("hpo_min_weight_decay", 1e-5, "Minimum batch size of HPO range")
+pipe.add_parameter("hpo_min_weight_decay", 1e-4, "Minimum batch size of HPO range")
 pipe.add_parameter("hpo_max_weight_decay", 1e-5, "Maximum batch size of HPO range")
-pipe.add_parameter("total_max_jobs", 3, "Total maximum job for the optimization process")
-pipe.add_parameter("max_job_iter", 5 , "Number of iteration per job ‘iterations’ for the specified objective")
-pipe.add_parameter("concurrent_tasks", 5 , "Nuber of concurrent experiments running")
+pipe.add_parameter("total_max_jobs", 2, "Total maximum job for the optimization process")
+pipe.add_parameter("max_job_iter", 2 , "Number of iteration per job ‘iterations’ for the specified objective")
+pipe.add_parameter("concurrent_tasks", 1 , "Nuber of concurrent experiments running")
 
 def pre_hpo_callback(pipeline, node, param_override) -> bool:  
     print("Cloning model_hpo id={}".format(node.base_task_id))    

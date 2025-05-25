@@ -6,9 +6,9 @@
 # The name of the project for all ClearML artifacts and processes. It can be changed to create new project environment.
 # Use alpha numeric names without spaces. Naming conventions:
 # project-name: "YOUR PROJECT NAME" # (run from dev branch) For personal testing
-project-name: "Detection_Dev"     # (run from dev branch) For development
+# project-name: "Detection_Dev"     # (run from dev branch) For development
 # project-name: "Detection_Stage"   # (run from main branch) For staging / pre-production testing
-# project-name: "Detection"         # (run from main branch) For production
+project-name: "Detection"         # (run from main branch) For production
 
 # default queue for CPU tasks
 queue-default: "default"
@@ -24,18 +24,18 @@ storage-cache-limit: 3
 
 # Runs pipeline remotely. If false, all pipeline tasks runs on local machine
 # This should be set to true on production and staging
-pipeline-remote-execution: false
+pipeline-remote-execution: true
 
 # The initial model download location. {} for model variant format, specific to YOLO
 base-model-url: "https://github.com/ultralytics/assets/releases/download/v8.3.0/{}.pt"
 
 # The initial dataset download location
 # base-dataset-url: "https://files.clear.ml/Detection/.datasets/base_dataset_zip/base_dataset_zip.26083b24ab0c47219a5e4f3fe026b085/artifacts/data/dataset.26083b24ab0c47219a5e4f3fe026b085.hev5us89.zip"
-base-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/split_dataset/base/base_dataset.zip"
+base-dataset-url: "https://files.clear.ml/Detection/.datasets/base_dataset/base_dataset.6a442c1e4e8248eaa869800b98eb092f/artifacts/data/dataset.6a442c1e4e8248eaa869800b98eb092f.2ov7rxlm.zip"
 
 # The initial evaluation dataset download location
 # eval-dataset-url: "https://files.clear.ml/Detection/.datasets/eval_dataset_zip/eval_dataset_zip.e19da140dd6a479c864dd7bdf930918d/artifacts/data/dataset.e19da140dd6a479c864dd7bdf930918d.ta98q5ob.zip"
-eval-dataset-url: "file:///Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/split_dataset/eval/eval_dataset.zip"
+eval-dataset-url: "https://files.clear.ml/Detection/.datasets/eval_dataset/eval_dataset.77adf7eeddd84a5f9796ffbc54ad2a02/artifacts/data/dataset.77adf7eeddd84a5f9796ffbc54ad2a02.6dk4d7n5.zip"
 
 # minimum performance requirements for model publishing
 validation-metrics-recall: 0.7
