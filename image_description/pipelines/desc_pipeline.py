@@ -38,7 +38,7 @@ import os
 from clearml.automation import PipelineController
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 from enigmaai.config import Project, ConfigFactory
-# os.chdir("/content/AIS_Project/")
+os.chdir("/content/AIS_Project/")
 
 # get project configurations
 project = ConfigFactory.get_config(Project.SCENE_DESCRIPTION)
