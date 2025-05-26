@@ -36,7 +36,7 @@ and run. Simply override the pipeline parameters at launch time to adjust behavi
 import sys
 import os
 from clearml.automation import PipelineController
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 from enigmaai.config import Project, ConfigFactory
 os.chdir("/content/AIS_Project/")
 
