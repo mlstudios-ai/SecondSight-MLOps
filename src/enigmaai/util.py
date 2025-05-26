@@ -41,4 +41,3 @@ def class_dist(labels_dir: List[str], classes: List[str]) -> List[int]:
                     class_counts[class_id] += 1
     
     return class_counts
-    
