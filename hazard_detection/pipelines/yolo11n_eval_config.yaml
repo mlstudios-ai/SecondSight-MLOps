@@ -1,6 +1,6 @@
-    epochs: 50
+    epochs: 10
     imgsz: 640
-    batch: 16
+    batch: 8
     conf: 0.25
     iou: 0.6
     split: "test"

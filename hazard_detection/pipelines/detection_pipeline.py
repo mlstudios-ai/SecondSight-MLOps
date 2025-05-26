@@ -1,5 +1,6 @@
 import sys
 import os
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
 from pathlib import Path
@@ -46,17 +47,17 @@ pipe = PipelineController(name=pipeline_name,
                           project=project_name, 
                           add_pipeline_tags=False)
 
-pipe.set_default_execution_queue("default")
+pipe.set_default_execution_queue(project.get('queue-default'))
 
 """ 
 STEP 1.1: Load base dataset
 """
 
 # intial dataset to download. If none provided, task will complete without upload
-base_dataset_url = ""       # default for no uploading
-base_dataset_name = ""      # default for no uploading (and splitting in the next task if base_dataset_id is empty)
-# base_dataset_url = project.get("base-dataset-url")
-# base_dataset_name = "base_dataset"
+# base_dataset_url = ""       # default for no uploading
+# base_dataset_name = ""      # default for no preprocessing if base_dataset_url is also empty
+base_dataset_url = project.get("base-dataset-url")
+base_dataset_name = "base_dataset"
 # base_dataset_url = "/Users/jasper/Anna/Uni/UTS/MAI/Subjects/AIS/project/Datasets/mini"
 # base_dataset_name = "base_update_dataset"
 pipe.add_parameter("base_dataset_url", base_dataset_url, "(Optional) URL to the final dataset.")
@@ -88,7 +89,7 @@ STEP 2: Dataset processing
 
 # processing starting dataset for pipeline
 # it will get dataset_id from step 1, if not provided, this will be used
-split_dataset_name = "dataset"
+split_dataset_name = "dataset"  # default to use the latest preprocessed dataset
 # split_dataset_name = "update_dataset"
 pipe.add_parameter("base_dataset_id", "", "(Optional) Overitten if previous task is not skipped. If empty, use the lastest of base_dataset_name")
 pipe.add_parameter("split_random_state", 42, "Specify random state for consistent training")
@@ -191,12 +192,54 @@ pipe.add_step(
 
 
 """ 
+STEP 4: Model hyperparameter optimisation
+"""
+# model optimisation settings
+pipe.add_parameter("hpo_min_batch", 6, "Minimum batch size of HPO range")
+pipe.add_parameter("hpo_max_batch", 8, "Maximum batch size of HPO range")
+pipe.add_parameter("hpo_min_weight_decay", 1e-4, "Minimum batch size of HPO range")
+pipe.add_parameter("hpo_max_weight_decay", 1e-5, "Maximum batch size of HPO range")
+pipe.add_parameter("total_max_jobs", 2, "Total maximum job for the optimization process")
+pipe.add_parameter("max_job_iter", 2 , "Number of iteration per job ‘iterations’ for the specified objective")
+pipe.add_parameter("concurrent_tasks", 1 , "Nuber of concurrent experiments running")
+
+def pre_hpo_callback(pipeline, node, param_override) -> bool:  
+    print("Cloning model_hpo id={}".format(node.base_task_id))    
+    
+    print("Cloning Task id={} with parameters: {}".format(
+        node.base_task_id, param_override))
+    
+    return True
+            
+def post_hpo_callback(pipeline, node) -> None:
+    print("Completed model_hpo id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_step(
+    name="model_hpo",
+    parents=["model_training"],
+    base_task_project=project_name,
+    base_task_name="Model HPO",
+    parameter_override={
+        "General/base_task_id": "${model_training.id}",   
+        "General/hpo_min_batch": "${pipeline.hpo_min_batch}",       
+        "General/hpo_max_batch": "${pipeline.hpo_max_batch}",
+        "General/hpo_min_weight_decay": "${pipeline.hpo_min_weight_decay}",
+        "General/hpo_max_weight_decay": "${pipeline.hpo_max_weight_decay}",
+        "General/total_max_jobs": "${pipeline.total_max_jobs}",
+        "General/max_job_iter": "${pipeline.max_job_iter}",
+        "General/concurrent_tasks": "${pipeline.concurrent_tasks}"
+    },
+    pre_execute_callback=pre_hpo_callback,
+    post_execute_callback=post_hpo_callback
+)
+
+""" 
 STEP 1.2: Upload eval dataset
 """
-
 # intial dataset to download. If none provided, task will complete without upload
-eval_dataset_url = ""       # default for no uploading
-# eval_dataset_url = project.get("eval-dataset-url")
+eval_dataset_url = project.get("eval-dataset-url")
+# eval_dataset_url = ""       # default for no uploading
 pipe.add_parameter("eval_dataset_url", eval_dataset_url, "(Optional) URL to the evaluation dataset.")
 pipe.add_parameter("eval_dataset_name", "eval_dataset", "Name of the dataset to upload to the server. Also used for the next step.")
 
@@ -220,7 +263,7 @@ pipe.add_step(
 )
 
 """
-STEP 4: Model Evaluation
+STEP 5: Model Evaluation
 """
 
 def load_eval_config(model_variant) -> dict:
@@ -256,7 +299,7 @@ def post_eval_callback(pipeline, node) -> None:
 
 pipe.add_step(
     name="model_evaluation",
-    parents=["model_training", "upload_eval_dataset"],
+    parents=["model_hpo", "upload_eval_dataset"],
     base_task_project=project_name,
     base_task_name="Model Evaluation",
     parameter_override={
@@ -265,7 +308,7 @@ pipe.add_step(
             if pipe.get_parameters()["eval_dataset_url"] 
             else "${pipeline.model_dataset_id}"), # no eval dataset upload
         "General/eval_dataset_name": "${pipeline.eval_dataset_name}",
-        "General/draft_model_id": "${model_training.parameters.General/output_model_id}",
+        "General/draft_model_id": "${model_hpo.parameters.General/best_model_id}",
         "General/pub_model_name": "${pipeline.model_variant}",
         "General/eval_args": "${pipeline.eval_args}"
     },
@@ -274,7 +317,7 @@ pipe.add_step(
 )
 
 """
-STEP 5: Model Publishing
+STEP 6: Model Publishing
 """
 
 def pre_pub_callback(pipeline, node, param_override) -> bool:
@@ -297,11 +340,37 @@ pipe.add_step(
     post_execute_callback=post_pub_callback
 )
 
+
+"""
+STEP 7: Model Deployment
+"""
+def pre_deploy_callback(pipeline, node, param_override) -> bool:
+    print("Cloning model_deploy id={}".format(node.base_task_id))    
+    return True
+
+def post_deploy_callback(pipeline, node) -> None:
+    print("Completed model_deploy id={} {}".format(node.base_task_id, node.executed))    
+    return
+
+pipe.add_parameter("pub_model_name", "yolo11n", "Deploy the lastest published model to endpoint")
+
+pipe.add_step(
+    name="model_deployment",
+    parents=["model_publishing"],
+    base_task_project=project_name,
+    base_task_name="Model Deployment",
+    parameter_override={
+        "General/pub_model_name": "${pipeline.pub_model_name}"
+    },
+    pre_execute_callback=pre_deploy_callback,
+    post_execute_callback=post_deploy_callback
+)
+
 remote_execution = project.get("pipeline-remote-execution")
 
 if remote_execution:
     print(f"Executing '{pipeline_name}' pipeline remotely")
-    pipe.start()
+    pipe.start(queue=project.get('queue-gpu'))
 else:
     print(f"Executing '{pipeline_name}' pipeline locally")
     pipe.start_locally(run_pipeline_steps_locally=True)
