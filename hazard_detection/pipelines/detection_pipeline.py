@@ -47,7 +47,7 @@ pipe = PipelineController(name=pipeline_name,
                           project=project_name, 
                           add_pipeline_tags=False)
 
-pipe.set_default_execution_queue(project.get('queue-cpu'))
+pipe.set_default_execution_queue(project.get('queue-gpu'))
 
 """ 
 STEP 1.1: Load base dataset
