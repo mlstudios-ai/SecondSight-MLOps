@@ -37,4 +37,3 @@ jobs:
       - name: Run pipeline
         run: |
           python hazard_detection/pipelines/detection_pipeline.py
-          python image_description/pipelines/desc_pipeline.py
