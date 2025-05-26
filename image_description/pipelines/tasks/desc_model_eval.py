@@ -6,19 +6,15 @@ from pathlib import Path
 import logging
 import torch
 from transformers import (
-    VisionEncoderDecoderModel,
-    ViTFeatureExtractor,
-    AutoTokenizer,
     Seq2SeqTrainingArguments,
     Seq2SeqTrainer
 )
-from PIL import Image
 import tempfile, zipfile
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src')))
 from enigmaai import util
 from enigmaai.config import Project, ConfigFactory
 from enigmaai.desc_prep_util import find_dir_with_files
-from enigmaai.desc_util import CaptionDataset, ComputeMetrics, CustomDataCollator
+from enigmaai.desc_util import CaptionDataset, ComputeMetrics, CustomDataCollator, ModelLoader
 import subprocess
 # Install absl-py on the fly so evaluate.load("rouge") can import it
 subprocess.check_call([sys.executable, "-m", "pip", "install", "absl-py"])
@@ -36,18 +32,19 @@ Initialize task for model evaluation
 """
 # Initialize clearl task
 task = Task.init(project_name=project_name, 
-                task_name="step7_desc_model_evaluation", 
+                task_name="step8_desc_model_evaluation", 
                 task_type=Task.TaskTypes.qc)
 params = {
-    'dataset_id': '',                 # specific version of the eval caption dataset
+    'dataset_id': '',  # specific version of the eval caption dataset
     'dataset_name': 'Desc_Caption_EvalDataset',              # latest registered dataset
-    'eval_dataset_id': '',      # specific version of the dataset
+    'eval_dataset_id': '',  # specific version of the dataset
     'eval_dataset_name': 'eval_dataset_zip',
-    'desc_draft_model_id': '',        # the unpublished model to evaluate 
+    'desc_draft_model_id': '',    # the unpublished model to evaluate 
     'desc_pub_model_name': 'student_desc_model',       # the published model name for comparison
+    'eval_batch_size': 16
 }
 task.connect(params)
-task.execute_remotely(queue_name="desc_preparation")
+task.execute_remotely(queue_name=project.get('queue-gpu'))
 task_params = task.get_parameters()
 logging.info("model_eval params=", task_params)
 
@@ -57,6 +54,7 @@ img_dataset_id = task.get_parameters()['General/eval_dataset_id']
 img_dataset_name = task.get_parameters()['General/eval_dataset_name']
 draft_model_id = task.get_parameters()['General/desc_draft_model_id']
 pub_model_name = task.get_parameters()['General/desc_pub_model_name']
+batch_size = int(task.get_parameters()['General/eval_batch_size'])
 
 # validate task input params
 if not dataset_id and not dataset_name:
@@ -69,7 +67,7 @@ if not img_dataset_id and not img_dataset_name:
 """
 Reference description/caption Dataset for evaluation - desc_caption_testdataset.json
 """
-# 2. Fetch JSON dataset from "Desc_Caption_EvalDataset" under "Description" project
+# 2. Fetch JSON dataset from "Desc_Caption_EvalDataset" under "Description_release" project
 try: 
     # download the latest registered caption eval dataset
     server_dataset = Dataset.get(dataset_id=dataset_id, only_completed=True, alias="eval_cap_dataset")
@@ -85,7 +83,7 @@ logging.info(f"Split JSONs located at: {eval_cap_path}")
 """
 Fetching image dataset for evaluation
 """
-# Fetch images ZIP from "eval_dataset_zip" under "Detection" project
+# Fetch images ZIP from "eval_dataset_zip" under "Detection" project 
 try: 
     # download the latest registered dataset
     server_dataset = Dataset.get(dataset_id=img_dataset_id, only_completed=True, alias="eval_img_dataset")
@@ -117,9 +115,7 @@ logging.info(f"Images downloaded to: {images_dir}")
 """
 Model evaluation
 """
-max_target_len = 64
-eval_batch_size = 16
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = util.get_device_name()
 out_dir = working_dir / "outputs_eval" 
 
 # no eval caption and image dataset provided
@@ -137,9 +133,9 @@ if not pub_model_name:
 
 # fetch the draft model path for evaluation    
 draft_model = Model(model_id=draft_model_id)    
-print(f"Found draft model name:{draft_model.name} id:{draft_model.id}")
+print(f"Found draft model id:{draft_model.id}")
 draft_model_path = draft_model.get_local_copy(raise_on_error=True)
-print(f"Downloaded draft model name: {draft_model.name} id:{draft_model.id} to: {draft_model_path}")
+print(f"Downloaded draft model id:{draft_model.id} to: {draft_model_path}")
   
 # fetch the published best model path
 server_models = Model.query_models(model_name=pub_model_name, only_published=True)
@@ -155,46 +151,12 @@ else:
     print(f"Found published model name:{pub_model.name} id:{pub_model.id}")
     pub_model_path = pub_model.get_local_copy(raise_on_error=True)
     print(f"Downloaded published model name: {pub_model.name} id:{pub_model.id} to: {pub_model_path}")
-  
-def load_model(model_path):
-    tmp_dir = Path(tempfile.mkdtemp())
-    # Unzip all files there
-    with zipfile.ZipFile(model_path, 'r') as zf:
-        zf.extractall(tmp_dir)
-    model = VisionEncoderDecoderModel.from_pretrained(tmp_dir)
-    tokenizer = AutoTokenizer.from_pretrained(tmp_dir)
-    feature_extractor = ViTFeatureExtractor.from_pretrained(tmp_dir)
-    tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-    model.decoder.resize_token_embeddings(len(tokenizer))
-    model.config.pad_token_id            = tokenizer.pad_token_id
-    model.config.decoder_start_token_id  = tokenizer.bos_token_id
-    model.config.eos_token_id            = tokenizer.eos_token_id
-    model.config.max_length              = max_target_len
-    model.config.num_beams               = 4
-    model.config.length_penalty          = 2.0
-    model.config.early_stopping          = True
-    model.to(device)
-    return model, feature_extractor, tokenizer
-
-def generate_caption(image_path, model, fe, tk, max_new_tokens=40, num_beams=4, decode=True):
-    model.eval()
-    img = Image.open(image_path).convert("RGB")
-    inputs = fe(images=img, return_tensors="pt").to(model.device)
-    with torch.no_grad():
-        output_ids = model.generate(
-            pixel_values=inputs.pixel_values,
-            max_new_tokens=max_new_tokens,
-            num_beams=num_beams,
-            pad_token_id=tk.pad_token_id,
-            eos_token_id=tk.eos_token_id,
-        )
-    return tk.decode(output_ids[0], skip_special_tokens=True) if decode else output_ids[0]
 
 # Evaluation Setup 
 eval_args = Seq2SeqTrainingArguments(
     output_dir=out_dir,
     run_name="test_student_model",# temp directory
-    per_device_eval_batch_size=eval_batch_size,
+    per_device_eval_batch_size=batch_size,
     predict_with_generate=True,
     do_train=False,
     do_eval=True,
@@ -204,8 +166,8 @@ eval_args = Seq2SeqTrainingArguments(
 
 # function to run evaluation 
 def run_eval(split_name, captions_json, model, feature_extractor, tokenizer):
-    ds = CaptionDataset(captions_json, images_dir, feature_extractor, tokenizer, max_target_len)
-    collator_fn = CustomDataCollator(model, tokenizer, device)
+    ds = CaptionDataset(captions_json, images_dir, feature_extractor, tokenizer)
+    collator_fn = CustomDataCollator(model, tokenizer)
     compute_metrics_fn = ComputeMetrics(tokenizer)
     trainer = Seq2SeqTrainer(
         model=model,
@@ -222,11 +184,13 @@ def run_eval(split_name, captions_json, model, feature_extractor, tokenizer):
 """
 Evaluation and comparison between draft and published best model
 """
-# evaluate the draft model    
-draft_model_hf, draft_feature_extractor, draft_tokenizer = load_model(draft_model_path)
+# evaluate the draft model   
+loader_draft = ModelLoader(model_zip_path=str(draft_model_path), device=device)
+draft_model_hf, draft_feature_extractor, draft_tokenizer = loader_draft.load()
 draft_metrics = run_eval("Test", test_json, draft_model_hf, draft_feature_extractor, draft_tokenizer)
 # evaluate the published best model
-pub_model_hf, pub_feature_extractor, pub_tokenizer = load_model(pub_model_path)
+loader_pub = ModelLoader(model_zip_path=str(pub_model_path), device=device)
+pub_model_hf, pub_feature_extractor, pub_tokenizer = loader_pub.load()
 pub_metrics = run_eval("Test", test_json, pub_model_hf, pub_feature_extractor, pub_tokenizer)    
 # show metrics for comparision
 print("keys=", draft_metrics.keys)
@@ -250,7 +214,7 @@ else: # new model not better, nothing to publish
 print("best_model_project:", project_name)
 print("best_model_id:", best_model.id)
 print("best_model_name:", best_model.name)
-print("best_model_variant:", best_model.name)
+
 
 # task output info
 task.set_parameter("best_model_project", project_name)
