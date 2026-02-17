@@ -7,14 +7,7 @@ The applicaiton requires a live camera input for object detection using YOLO and
 1. Standalone - Hazard object detection with haptic feedback. No speech description.
 2. Plus - With additional speech description upon detection and at request
 
-## Cloning fom GitHub 
-```sh 
-git clone https://{github_username}:{github_access_token}@github.com/{github_username}/EnigmaAI.git
-   ```
-
-## use python 3.9
-
-## Libaray dependencies
+## Environment Setup
 1. List all top level libraries in `requirements.txt` for top level.
 2. Run `pip install -r requirements.txt` to install top level dependencies
 
@@ -43,19 +36,6 @@ For more detail, refer to submodules README.md including setup instructions.
 ### Install libary dependencies
 1. List all libraries in `image_description/requirements.txt`.
 2. Run `pip install -r image_description/requirements.txt` to install
-
-## API component
-API to serve the model inferencing endpoint for the application. This is a FastAPI project.
-
-### Install libaray dependencies
-1. List all libraries in `api/requirements.txt`.
-2. Run `pip install -r api/requirements.txt` to install
-
-## iOS component
-UI component for iOS platform. This is the final application using all other componenets to serve its functionalities for a blind person. 
-
-Please refer to Requirment and Design documentations for more details.
-
 
 
 
