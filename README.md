@@ -72,19 +72,6 @@ Automated end-to-end pipeline for training and deploying **YOLO v11n Nano CoreML
 
 ![Hazard Detection Pipeline](docs/images/detection_pipeline_info.png)
 
-#### **Pipeline Tasks (ClearML Orchestration)**
-
-| Task | Purpose | Runtime | Key Operations |
-|------|---------|---------|----------------|
-| **upload_base_dataset** | Data ingestion | - | Validation on annotations, upload from URL, EDA visualization |
-| **dataset_process_split** | Data preparation | - | Configurable split ratio, format conversion, augmentation |
-| **model_training** | Model training | 13:38m | Fine-tune from base YOLO v11n or existing checkpoint |
-| **model_hpo** | Hyperparameter tuning | 22:35m | Grid/random search over hyperparameter ranges |
-| **upload_eval_dataset** | Eval data ingestion | - | Separate held-out test set upload and validation |
-| **model_evaluation** | Model validation | 01:19m | Compare new model with published baseline, compute metrics |
-| **model_publishing** | Model registry | 14s | Validate recall ≥75%, publish best model to registry |
-| **model_deployment** | Production deploy | 18s | Deploy to GitHub FastAPI repo, convert to CoreML |
-
 #### **Key Features**
 - **Automation**: Sequential ClearML tasks with dependency management
 - **Remote Execution**: Tasks distributed across Google Cloud remote agents
@@ -108,20 +95,6 @@ pipeline.start_remotely(queue="default")
 Automated MLOps pipeline for **knowledge distillation** from LLaVA 1.5-7B teacher model to lightweight VIT-GPT2 student model for scene description generation.
 
 ![Scene Description Pipeline](docs/images/description_pipeline_info.png)
-
-#### **Pipeline Tasks (ClearML Orchestration)**
-
-| Task | Purpose | Runtime | Key Operations |
-|------|---------|---------|----------------|
-| **step1_desc_basedata_preparation** | Teacher dataset prep | 39s | Extract images from hazard detection upload, data annotation for VLM |
-| **step2_desc_testdata_preparation** | Test dataset prep | - | Extract evaluation images from detection upload |
-| **step3_desc_basecaption_generation** | Teacher inference | 10:54m | Generate captions using LLaVA 1.5-7B for distillation training data |
-| **step4_desc_evalcaption_generation** | Teacher inference | 06:32m | Generate eval captions using LLaVA model for benchmark |
-| **step5_desc_split_data** | Data preparation | 30s | Configurable train/val split for student model training |
-| **step6_desc_model_training** | Student training | 04:03m | Fine-tune VIT-GPT2 student on teacher-generated captions |
-| **step7_desc_model_hpo** | Hyperparameter tuning | 33:38m | HPO for student model learning rate, batch size, epochs |
-| **step8_desc_model_evaluation** | Model validation | 01:25m | Evaluate student using CIDER, BLEU, ROUGE metrics |
-| **step9_desc_model_publish** | Model registry | 11s | Validate CIDER ≥0.47, publish to ClearML registry |
 
 #### **Knowledge Distillation Strategy**
 - **Teacher Model**: LLaVA 1.5-7B (vision-language model) - high quality but computationally expensive
@@ -509,21 +482,6 @@ jobs:
 - **ClearML**: Experiment tracking, metrics logging
 - **TensorBoard**: Training visualization
 - **Prometheus** (planned): Production metrics monitoring
-
----
-
-## Team
-
-**EnigmaAI** | **SecondSight v0.2**
-
-| Role | Name | Focus Area |
-|------|------|------------|
-| **Tech Lead & MLOps** | Anna Huang | Pipeline automation, model deployment |
-| **Product Owner** | Rozhin Vosoughi | Requirements, stakeholder management |
-| **Solution Designer** | Kamatchi Gnanavel | Architecture design, system integration |
-| **Data Scientist** | Zoe Lin | Model development, evaluation |
-
----
 
 ## References
 
