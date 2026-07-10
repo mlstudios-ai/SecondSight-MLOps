@@ -29,11 +29,11 @@ SecondSight provides real-time hazard detection and environmental scene descript
 
 ---
 
-## System Architecture
+## System Architecture Design
 
 The system architecture implements **component-based design** with automated pipelines for continuous model training, evaluation, and deployment.
 
-![System Architecture](docs/images/SecondSight%20-%20Solution%20Design%20v0.1.png)
+![System Design](docs/images/system-design.png)
 
 For application component, please see [SecondSight](https://github.com/mlstudios-ai/SecondSight)
 
@@ -49,7 +49,7 @@ For API component, please see [FastAPI API](https://github.com/mlstudios-ai/Seco
 #### **Model Training**
 - **Hazard Detection**: YOLO v11n training on custom hazard dataset (5 classes)
 - **Scene Description**: Knowledge distillation from LLaVA 1.5-7B to lightweight VIT-GPT2 student model
-- **HPO**: Hyperparameter optimization using ClearML orchestrated experiments
+- **HPO**: Hyperparameter optimization using ClearML orchestrated experiments and pipelines
 
 #### **Model Deployment**
 - **On-device (iOS)**: PyTorch → CoreML conversion for hazard detection
@@ -58,9 +58,8 @@ For API component, please see [FastAPI API](https://github.com/mlstudios-ai/Seco
 - **CI/CD**: GitHub Actions for automated model deployment
 
 #### **Model Serving**
-- **FastAPI**: REST API for model inference (both on-device and remote endpoints)
+- **FastAPI**: REST API for model inference (both on-device and remote endpoints via nprok tunneling)
 - **GitHub Repo**: Model artifacts published to GitHub for version control
-- **AWS ECS**: Cloud hosting for scene description model (on-demand scaling)
 
 ---
 
@@ -160,11 +159,6 @@ pipe.start_remotely(queue="default")
 - **Queues**: Default queue for CPU tasks, GPU queue for training tasks
 - **Caching**: Intermediate results cached in ClearML for reproducibility
 - **Logging**: All metrics, artifacts, and logs tracked in ClearML UI
-
-### Pipeline Triggers
-- **Manual**: Via ClearML UI or Python SDK
-- **Scheduled**: Cron-based triggers for periodic retraining
-- **Event-driven**: Triggered on new dataset uploads or model registry updates
 
 ---
 
@@ -413,9 +407,8 @@ SecondSight-MLOps/
 - **`image_description/pipelines/tasks/`**: Individual ClearML tasks for description pipeline
 - **`.github/workflows/`**: CI/CD automation for model deployment
 - **`configs/`**: Training configurations, hyperparameter ranges
-- **`notebooks/`**: Exploratory data analysis and POC experiments
 
-For detailed documentation on each component:
+For more details on each component:
 - **Hazard Detection Pipeline**: [hazard_detection/README.md](hazard_detection/README.md)
 - **Scene Description Pipeline**: [image_description/README.md](image_description/README.md)
 
@@ -424,32 +417,7 @@ For detailed documentation on each component:
 ## CI/CD Workflow
 
 ### GitHub Actions Integration
-
-**Deployment Triggers:**
-- Manual trigger via GitHub Actions UI
-- Automatic on model publish to ClearML registry (webhook)
-- Scheduled retraining (weekly/monthly)
-
-**Deployment Pipeline:**
-```yaml
-# .github/workflows/deploy_detection.yml
-name: Deploy Hazard Detection Model
-
-on:
-  workflow_dispatch:  # Manual trigger
-  repository_dispatch:  # ClearML webhook trigger
-    types: [model-published]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download model from ClearML
-      - name: Convert PyTorch to CoreML
-      - name: Publish to FastAPI GitHub repo
-      - name: Build Docker image
-      - name: Deploy to AWS ECS
-```
+- **Pipeline Re-run** on PR sumbission for code changes
 
 ### Continuous Integration
 - **Linting**: `flake8`, `black` for code formatting
@@ -475,31 +443,9 @@ jobs:
 ### Deployment & Serving
 - **FastAPI**: REST API for model inference
 - **Docker**: Containerization
-- **AWS ECS**: Cloud deployment (on-demand scaling)
-- **GitHub**: Model artifact repository
 
 ### Monitoring & Logging
 - **ClearML**: Experiment tracking, metrics logging
-- **TensorBoard**: Training visualization
-- **Prometheus** (planned): Production metrics monitoring
-
-## References
-
-### Frameworks & Libraries
-- **YOLO v11**: [Ultralytics Documentation](https://docs.ultralytics.com/)
-- **LLaVA 1.5**: [LLaVA GitHub](https://github.com/haotian-liu/LLaVA)
-- **ClearML**: [ClearML Documentation](https://clear.ml/docs)
-- **CoreML**: [Apple CoreML Guide](https://developer.apple.com/documentation/coreml)
-
-### Academic References
-- Vision 2020 (2022). *2022-23 Pre-Budget Submission*. [Link](https://treasury.gov.au/sites/default/files/2022-03/258735_vision_2020_australia.pdf)
-- WHO (2023). *Blindness and vision impairment Facts*
-
----
-
-## License
-
-This project is part of an academic assessment (UTS MAI - Advanced Intelligent Systems) for educational purposes.
 
 
 
